@@ -4,10 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    # "build(deps): bump ...", so the messages pass the check in CI.
+    # The NuGet updater ignores "include: scope" (it only reads the prefix),
+    # so the scope is spelled out here to get "build(deps): ...".
     commit-message:
-      prefix: build
-      include: scope
+      prefix: "build(deps)"
     groups:
       microsoft-extensions:
         patterns:

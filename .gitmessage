@@ -1,0 +1,13 @@
+# <type>(<scope>)!: <subject>
+#
+# type:    feat | fix | docs | test | refactor | style | build | ci | chore
+# scope:   optional, e.g. client, options, di, tests, smoke
+# !:       only for a breaking change, with a BREAKING CHANGE: footer below
+# subject: imperative, lowercase, no trailing period, header at most 72 characters
+#
+# Body (optional): what changed and why, wrapped at 72 characters.
+#
+# Footers (optional): BREAKING CHANGE: <what breaks and how to migrate>
+#                     Fixes #<issue>
+#
+# The full convention is in CONTRIBUTING.md.

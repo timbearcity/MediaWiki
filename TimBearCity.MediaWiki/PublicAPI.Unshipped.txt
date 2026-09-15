@@ -1,0 +1,688 @@
+#nullable enable
+TimBearCity.MediaWiki.IMediaWikiClient
+TimBearCity.MediaWiki.IMediaWikiClient.CompareRevisionsAsync(long fromRevisionId, long toRevisionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison?>!
+TimBearCity.MediaWiki.IMediaWikiClient.CreatePageAsync(string! title, string! source, string! comment, string? contentModel = null, string? csrfToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage!>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetFileAsync(string! title, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Files.MediaWikiFile?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetFileThumbnailsAsync(string! title, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageBareAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageBare?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageFilesAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Files.MediaWikiFile!>?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageHistoryAsync(string! key, long? olderThan = null, long? newerThan = null, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter? filter = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageHistory?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageHistoryCountAsync(string! key, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType type, long? fromRevisionId = null, long? toRevisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageHtmlAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageLanguageLinksAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink!>?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageLintAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetPageWithHtmlAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetRevisionAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevision?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetRevisionBareAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetRevisionHtmlAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetRevisionLintAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>?>!
+TimBearCity.MediaWiki.IMediaWikiClient.GetRevisionWithHtmlAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml?>!
+TimBearCity.MediaWiki.IMediaWikiClient.SearchPagesAsync(string! query, int limit = 50, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Search.MediaWikiSearchResult!>!>!
+TimBearCity.MediaWiki.IMediaWikiClient.SearchTitlesAsync(string! query, int limit = 50, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Search.MediaWikiSearchResult!>!>!
+TimBearCity.MediaWiki.IMediaWikiClient.TransformHtmlToWikitextAsync(string! html, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string!>!
+TimBearCity.MediaWiki.IMediaWikiClient.TransformWikitextToHtmlAsync(string! wikitext, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string!>!
+TimBearCity.MediaWiki.IMediaWikiClient.TransformWikitextToLintAsync(string! wikitext, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>!>!
+TimBearCity.MediaWiki.IMediaWikiClient.UpdatePageAsync(string! key, string! source, string! comment, long? latestRevisionId = null, string? contentModel = null, string? csrfToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage!>!
+TimBearCity.MediaWiki.MediaWikiClient
+TimBearCity.MediaWiki.MediaWikiClient.CompareRevisionsAsync(long fromRevisionId, long toRevisionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison?>!
+TimBearCity.MediaWiki.MediaWikiClient.CreatePageAsync(string! title, string! source, string! comment, string? contentModel = null, string? csrfToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage!>!
+TimBearCity.MediaWiki.MediaWikiClient.GetFileAsync(string! title, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Files.MediaWikiFile?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetFileThumbnailsAsync(string! title, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageBareAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageBare?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageFilesAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Files.MediaWikiFile!>?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageHistoryAsync(string! key, long? olderThan = null, long? newerThan = null, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter? filter = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageHistory?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageHistoryCountAsync(string! key, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType type, long? fromRevisionId = null, long? toRevisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageHtmlAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageLanguageLinksAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink!>?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageLintAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetPageWithHtmlAsync(string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetRevisionAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevision?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetRevisionBareAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetRevisionHtmlAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetRevisionLintAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>?>!
+TimBearCity.MediaWiki.MediaWikiClient.GetRevisionWithHtmlAsync(long id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml?>!
+TimBearCity.MediaWiki.MediaWikiClient.MediaWikiClient(System.Net.Http.HttpClient! httpClient) -> void
+TimBearCity.MediaWiki.MediaWikiClient.SearchPagesAsync(string! query, int limit = 50, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Search.MediaWikiSearchResult!>!>!
+TimBearCity.MediaWiki.MediaWikiClient.SearchTitlesAsync(string! query, int limit = 50, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Search.MediaWikiSearchResult!>!>!
+TimBearCity.MediaWiki.MediaWikiClient.TransformHtmlToWikitextAsync(string! html, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string!>!
+TimBearCity.MediaWiki.MediaWikiClient.TransformWikitextToHtmlAsync(string! wikitext, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string!>!
+TimBearCity.MediaWiki.MediaWikiClient.TransformWikitextToLintAsync(string! wikitext, string? title = null, long? revisionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Transform.MediaWikiLintError!>!>!
+TimBearCity.MediaWiki.MediaWikiClient.UpdatePageAsync(string! key, string! source, string! comment, long? latestRevisionId = null, string? contentModel = null, string? csrfToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TimBearCity.MediaWiki.Pages.MediaWikiPage!>!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Deconstruct(out long Id, out string! SlotRole, out System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection!>! Sections) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Id.get -> long
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Id.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.MediaWikiComparisonRevision(long Id, string! SlotRole, System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection!>! Sections) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Sections.get -> System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection!>!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Sections.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.SlotRole.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.SlotRole.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Deconstruct(out int Level, out string! Heading, out int Offset) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Heading.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Heading.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Level.get -> int
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Level.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.MediaWikiComparisonSection(int Level, string! Heading, int Offset) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Offset.get -> int
+TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Offset.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Deconstruct(out TimBearCity.MediaWiki.Revisions.MediaWikiDiffType Type, out string! Text, out TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset! Offset, out int? LineNumber, out System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange!>? HighlightRanges, out TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? MoveInfo) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.HighlightRanges.get -> System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange!>?
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.HighlightRanges.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.LineNumber.get -> int?
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.LineNumber.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.MediaWikiDiffEntry(TimBearCity.MediaWiki.Revisions.MediaWikiDiffType Type, string! Text, TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset! Offset, int? LineNumber = null, System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange!>? HighlightRanges = null, TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? MoveInfo = null) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.MoveInfo.get -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo?
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.MoveInfo.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Offset.get -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Offset.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Text.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Text.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Type.get -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Type.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Deconstruct(out int Start, out int Length, out TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType Type) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Length.get -> int
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Length.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.MediaWikiDiffHighlightRange(int Start, int Length, TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType Type) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Start.get -> int
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Start.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Type.get -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Type.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType.Addition = 0 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType.Deletion = 1 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection.Higher = 1 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection.Lower = 0 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.Deconstruct(out string! Id, out string! LinkId, out TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection LinkDirection) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.Id.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.Id.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.LinkDirection.get -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.LinkDirection.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.LinkId.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.LinkId.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.MediaWikiDiffMoveInfo(string! Id, string! LinkId, TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveDirection LinkDirection) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset!
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.Deconstruct(out int? From, out int? To) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.From.get -> int?
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.From.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.MediaWikiDiffOffset(int? From, int? To) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.To.get -> int?
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.To.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.Added = 1 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.Changed = 3 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.Context = 0 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.MovedFrom = 4 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.MovedTo = 5 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.Revisions.MediaWikiDiffType.Removed = 2 -> TimBearCity.MediaWiki.Revisions.MediaWikiDiffType
+TimBearCity.MediaWiki.MediaWikiException
+TimBearCity.MediaWiki.MediaWikiException.ErrorKey.get -> string?
+TimBearCity.MediaWiki.MediaWikiException.IsTransient.get -> bool
+TimBearCity.MediaWiki.MediaWikiException.MediaWikiException(string! message, System.Net.HttpStatusCode? statusCode = null, string? errorKey = null, System.TimeSpan? retryAfter = null, System.Exception? innerException = null) -> void
+TimBearCity.MediaWiki.MediaWikiException.RetryAfter.get -> System.TimeSpan?
+TimBearCity.MediaWiki.Files.MediaWikiFile
+TimBearCity.MediaWiki.Files.MediaWikiFile.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFile!
+TimBearCity.MediaWiki.Files.MediaWikiFile.Deconstruct(out string! Title, out string! FileDescriptionUrl, out TimBearCity.MediaWiki.Files.MediaWikiFileRevision? Latest, out TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Preferred, out TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Original, out TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Thumbnail) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Equals(TimBearCity.MediaWiki.Files.MediaWikiFile? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFile.FileDescriptionUrl.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFile.FileDescriptionUrl.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Latest.get -> TimBearCity.MediaWiki.Files.MediaWikiFileRevision?
+TimBearCity.MediaWiki.Files.MediaWikiFile.Latest.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.MediaWikiFile(string! Title, string! FileDescriptionUrl, TimBearCity.MediaWiki.Files.MediaWikiFileRevision? Latest, TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Preferred, TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Original, TimBearCity.MediaWiki.Files.MediaWikiFileFormat? Thumbnail = null) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Original.get -> TimBearCity.MediaWiki.Files.MediaWikiFileFormat?
+TimBearCity.MediaWiki.Files.MediaWikiFile.Original.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Preferred.get -> TimBearCity.MediaWiki.Files.MediaWikiFileFormat?
+TimBearCity.MediaWiki.Files.MediaWikiFile.Preferred.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Thumbnail.get -> TimBearCity.MediaWiki.Files.MediaWikiFileFormat?
+TimBearCity.MediaWiki.Files.MediaWikiFile.Thumbnail.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFile.Title.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFile.Title.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFileFormat!
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Deconstruct(out string! MediaType, out string! Url, out long? Size, out int? Width, out int? Height, out double? Duration) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Duration.get -> double?
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Duration.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Equals(TimBearCity.MediaWiki.Files.MediaWikiFileFormat? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Height.get -> int?
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Height.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.MediaType.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.MediaType.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.MediaWikiFileFormat(string! MediaType, string! Url, long? Size = null, int? Width = null, int? Height = null, double? Duration = null) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Size.get -> long?
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Size.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Url.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Url.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Width.get -> int?
+TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Width.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFileOriginal!
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Deconstruct(out string! MediaType, out string! Url, out int? Width, out int? Height) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Equals(TimBearCity.MediaWiki.Files.MediaWikiFileOriginal? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Height.get -> int?
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Height.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.MediaType.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.MediaType.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.MediaWikiFileOriginal(string! MediaType, string! Url, int? Width = null, int? Height = null) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Url.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Url.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Width.get -> int?
+TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Width.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFileRevision!
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.Deconstruct(out System.DateTimeOffset Timestamp, out TimBearCity.MediaWiki.Common.MediaWikiUser? User) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.Equals(TimBearCity.MediaWiki.Files.MediaWikiFileRevision? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.MediaWikiFileRevision(System.DateTimeOffset Timestamp, TimBearCity.MediaWiki.Common.MediaWikiUser? User) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.Timestamp.get -> System.DateTimeOffset
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.Timestamp.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.User.get -> TimBearCity.MediaWiki.Common.MediaWikiUser?
+TimBearCity.MediaWiki.Files.MediaWikiFileRevision.User.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Deconstruct(out string! MimeType, out string! Url, out int Width, out int Height, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? ResponsiveUrls) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Equals(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Height.get -> int
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Height.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.MediaWikiFileThumbnail(string! MimeType, string! Url, int Width, int Height, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? ResponsiveUrls = null) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.MimeType.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.MimeType.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.ResponsiveUrls.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.ResponsiveUrls.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Url.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Url.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Width.get -> int
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Width.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.<Clone>$() -> TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Deconstruct(out string! Title, out TimBearCity.MediaWiki.Files.MediaWikiFileOriginal! Original, out System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail!>! Thumbnails) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Equals(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails? other) -> bool
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.MediaWikiFileThumbnails(string! Title, TimBearCity.MediaWiki.Files.MediaWikiFileOriginal! Original, System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail!>! Thumbnails) -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Original.get -> TimBearCity.MediaWiki.Files.MediaWikiFileOriginal!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Original.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Thumbnails.get -> System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail!>!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Thumbnails.init -> void
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Title.get -> string!
+TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Title.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink!
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Code.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Code.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Deconstruct(out string! Code, out string! Name, out string! Key, out string! Title) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Key.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Key.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.MediaWikiPageLanguageLink(string! Code, string! Name, string! Key, string! Title) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Name.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Name.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Title.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Title.init -> void
+TimBearCity.MediaWiki.Common.MediaWikiLicense
+TimBearCity.MediaWiki.Common.MediaWikiLicense.<Clone>$() -> TimBearCity.MediaWiki.Common.MediaWikiLicense!
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Deconstruct(out string? Title, out string? Url) -> void
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Equals(TimBearCity.MediaWiki.Common.MediaWikiLicense? other) -> bool
+TimBearCity.MediaWiki.Common.MediaWikiLicense.MediaWikiLicense(string? Title, string? Url) -> void
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Title.get -> string?
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Title.init -> void
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Url.get -> string?
+TimBearCity.MediaWiki.Common.MediaWikiLicense.Url.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.<Clone>$() -> TimBearCity.MediaWiki.Transform.MediaWikiLintError!
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Deconstruct(out string! Type, out System.Collections.Generic.IReadOnlyList<int?>! Dsr, out TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? TemplateInfo, out System.Text.Json.JsonElement Params) -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Dsr.get -> System.Collections.Generic.IReadOnlyList<int?>!
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Dsr.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Equals(TimBearCity.MediaWiki.Transform.MediaWikiLintError? other) -> bool
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.MediaWikiLintError(string! Type, System.Collections.Generic.IReadOnlyList<int?>! Dsr, TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? TemplateInfo = null, System.Text.Json.JsonElement Params = default(System.Text.Json.JsonElement)) -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Params.get -> System.Text.Json.JsonElement
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Params.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.TemplateInfo.get -> TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo?
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.TemplateInfo.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Type.get -> string!
+TimBearCity.MediaWiki.Transform.MediaWikiLintError.Type.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.<Clone>$() -> TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo!
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.Deconstruct(out string? Name, out bool? IsMultiPartTemplateBlock) -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.Equals(TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? other) -> bool
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.IsMultiPartTemplateBlock.get -> bool?
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.IsMultiPartTemplateBlock.init -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.MediaWikiLintTemplateInfo(string? Name = null, bool? IsMultiPartTemplateBlock = null) -> void
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.Name.get -> string?
+TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.Name.init -> void
+TimBearCity.MediaWiki.MediaWikiOptions
+TimBearCity.MediaWiki.MediaWikiOptions.AccessToken.get -> string?
+TimBearCity.MediaWiki.MediaWikiOptions.AccessToken.set -> void
+TimBearCity.MediaWiki.MediaWikiOptions.AccessTokenProvider.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<string?>>?
+TimBearCity.MediaWiki.MediaWikiOptions.AccessTokenProvider.set -> void
+TimBearCity.MediaWiki.MediaWikiOptions.BaseUrl.get -> string!
+TimBearCity.MediaWiki.MediaWikiOptions.BaseUrl.set -> void
+TimBearCity.MediaWiki.MediaWikiOptions.MaxResponseSize.get -> int?
+TimBearCity.MediaWiki.MediaWikiOptions.MaxResponseSize.set -> void
+TimBearCity.MediaWiki.MediaWikiOptions.MediaWikiOptions() -> void
+TimBearCity.MediaWiki.MediaWikiOptions.Timeout.get -> System.TimeSpan
+TimBearCity.MediaWiki.MediaWikiOptions.Timeout.set -> void
+TimBearCity.MediaWiki.MediaWikiOptions.UserAgent.get -> string!
+TimBearCity.MediaWiki.MediaWikiOptions.UserAgent.set -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPage
+TimBearCity.MediaWiki.Pages.MediaWikiPage.Deconstruct(out long Id, out string! Key, out string! Title, out TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, out string! ContentModel, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out string! Source, out string? RedirectTarget) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPage.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPage? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPage.MediaWikiPage(long Id, string! Key, string! Title, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, string! ContentModel, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, string! Source, string? RedirectTarget = null) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPage.RedirectTarget.get -> string?
+TimBearCity.MediaWiki.Pages.MediaWikiPage.RedirectTarget.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPage.Source.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPage.Source.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.Deconstruct(out long Id, out string! Key, out string! Title, out TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, out string! ContentModel, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out string! HtmlUrl, out string? RedirectTarget) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageBare? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.HtmlUrl.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.HtmlUrl.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.MediaWikiPageBare(long Id, string! Key, string! Title, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, string! ContentModel, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, string! HtmlUrl, string? RedirectTarget = null) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.RedirectTarget.get -> string?
+TimBearCity.MediaWiki.Pages.MediaWikiPageBare.RedirectTarget.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistory!
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Deconstruct(out System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision!>! Revisions, out string! Latest, out string? Older, out string? Newer) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageHistory? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Latest.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Latest.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.MediaWikiPageHistory(System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision!>! Revisions, string! Latest, string? Older = null, string? Newer = null) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Newer.get -> string?
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Newer.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Older.get -> string?
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Older.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Revisions.get -> System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision!>!
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Revisions.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount!
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.Count.get -> int
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.Count.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.Deconstruct(out int Count, out bool IsLimitExceeded) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.IsLimitExceeded.get -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.IsLimitExceeded.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.MediaWikiPageHistoryCount(int Count, bool IsLimitExceeded) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Anonymous = 0 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.AnonymousEdits = 7 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Bot = 2 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.BotEdits = 8 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Editors = 3 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Edits = 4 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Minor = 5 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Reverted = 6 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.RevertedEdits = 9 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType.Temporary = 1 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCountType
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter.Anonymous = 0 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter.Bot = 1 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter.Minor = 3 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter.Reverted = 2 -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryFilter
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision!
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Comment.get -> string?
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Comment.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Deconstruct(out long Id, out System.DateTimeOffset Timestamp, out bool IsMinor, out int Size, out string? Comment, out TimBearCity.MediaWiki.Common.MediaWikiUser? User, out int? Delta) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Delta.get -> int?
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Delta.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Id.get -> long
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Id.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.IsMinor.get -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.IsMinor.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.MediaWikiPageHistoryRevision(long Id, System.DateTimeOffset Timestamp, bool IsMinor, int Size, string? Comment, TimBearCity.MediaWiki.Common.MediaWikiUser? User, int? Delta) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Size.get -> int
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Size.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Timestamp.get -> System.DateTimeOffset
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Timestamp.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.User.get -> TimBearCity.MediaWiki.Common.MediaWikiUser?
+TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.User.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.ContentModel.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.ContentModel.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Deconstruct(out long Id, out string! Key, out string! Title, out TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, out string! ContentModel, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Id.get -> long
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Id.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Key.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Key.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Latest.get -> TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference!
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Latest.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.License.get -> TimBearCity.MediaWiki.Common.MediaWikiLicense!
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.License.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.MediaWikiPageMetadata(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata! original) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.MediaWikiPageMetadata(long Id, string! Key, string! Title, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, string! ContentModel, TimBearCity.MediaWiki.Common.MediaWikiLicense! License) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Title.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Title.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiPageReference!
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Deconstruct(out long Id, out string! Key, out string! Title) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiPageReference? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Id.get -> long
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Id.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Key.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Key.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.MediaWikiPageReference(long Id, string! Key, string! Title) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Title.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Title.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.<Clone>$() -> TimBearCity.MediaWiki.Search.MediaWikiSearchResult!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Anchor.get -> string?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Anchor.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Deconstruct(out long Id, out string! Key, out string! Title, out string? Excerpt, out string? MatchedTitle, out string? Anchor, out string? Description, out TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? Thumbnail) -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Description.get -> string?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Description.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Equals(TimBearCity.MediaWiki.Search.MediaWikiSearchResult? other) -> bool
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Excerpt.get -> string?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Excerpt.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Id.get -> long
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Id.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Key.get -> string!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Key.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.MatchedTitle.get -> string?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.MatchedTitle.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.MediaWikiSearchResult(long Id, string! Key, string! Title, string? Excerpt = null, string? MatchedTitle = null, string? Anchor = null, string? Description = null, TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? Thumbnail = null) -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Thumbnail.get -> TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Thumbnail.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Title.get -> string!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Title.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Deconstruct(out long Id, out string! Key, out string! Title, out TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, out string! ContentModel, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out string! Html) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Html.get -> string!
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Html.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.MediaWikiPageWithHtml(long Id, string! Key, string! Title, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference! Latest, string! ContentModel, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, string! Html) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Deconstruct(out long Id, out int Size, out bool IsMinor, out System.DateTimeOffset Timestamp, out string! ContentModel, out TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out TimBearCity.MediaWiki.Common.MediaWikiUser? User, out string? Comment, out int? Delta, out string! Source) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevision? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision.MediaWikiRevision(long Id, int Size, bool IsMinor, System.DateTimeOffset Timestamp, string! ContentModel, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, TimBearCity.MediaWiki.Common.MediaWikiUser? User, string? Comment, int? Delta, string! Source) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Source.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Source.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.Deconstruct(out long Id, out int Size, out bool IsMinor, out System.DateTimeOffset Timestamp, out string! ContentModel, out TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out TimBearCity.MediaWiki.Common.MediaWikiUser? User, out string? Comment, out int? Delta, out string! HtmlUrl) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.HtmlUrl.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.HtmlUrl.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.MediaWikiRevisionBare(long Id, int Size, bool IsMinor, System.DateTimeOffset Timestamp, string! ContentModel, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, TimBearCity.MediaWiki.Common.MediaWikiUser? User, string? Comment, int? Delta, string! HtmlUrl) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.Deconstruct(out TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision! From, out TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision! To, out System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry!>! Diff) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.Diff.get -> System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry!>!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.Diff.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.From.get -> TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.From.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.MediaWikiRevisionComparison(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision! From, TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision! To, System.Collections.Generic.IReadOnlyList<TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry!>! Diff) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.To.get -> TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.To.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Comment.get -> string?
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Comment.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.ContentModel.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.ContentModel.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Deconstruct(out long Id, out int Size, out bool IsMinor, out System.DateTimeOffset Timestamp, out string! ContentModel, out TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out TimBearCity.MediaWiki.Common.MediaWikiUser? User, out string? Comment, out int? Delta) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Delta.get -> int?
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Delta.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Id.get -> long
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Id.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.IsMinor.get -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.IsMinor.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.License.get -> TimBearCity.MediaWiki.Common.MediaWikiLicense!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.License.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.MediaWikiRevisionMetadata(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata! original) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.MediaWikiRevisionMetadata(long Id, int Size, bool IsMinor, System.DateTimeOffset Timestamp, string! ContentModel, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, TimBearCity.MediaWiki.Common.MediaWikiUser? User, string? Comment, int? Delta) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Page.get -> TimBearCity.MediaWiki.Revisions.MediaWikiPageReference!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Page.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Size.get -> int
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Size.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Timestamp.get -> System.DateTimeOffset
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Timestamp.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.User.get -> TimBearCity.MediaWiki.Common.MediaWikiUser?
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.User.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference!
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Deconstruct(out long Id, out System.DateTimeOffset Timestamp) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Equals(TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference? other) -> bool
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Id.get -> long
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Id.init -> void
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.MediaWikiRevisionReference(long Id, System.DateTimeOffset Timestamp) -> void
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Timestamp.get -> System.DateTimeOffset
+TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Timestamp.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Deconstruct(out long Id, out int Size, out bool IsMinor, out System.DateTimeOffset Timestamp, out string! ContentModel, out TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, out TimBearCity.MediaWiki.Common.MediaWikiLicense! License, out TimBearCity.MediaWiki.Common.MediaWikiUser? User, out string? Comment, out int? Delta, out string! Html) -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml? other) -> bool
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Html.get -> string!
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Html.init -> void
+TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.MediaWikiRevisionWithHtml(long Id, int Size, bool IsMinor, System.DateTimeOffset Timestamp, string! ContentModel, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference! Page, TimBearCity.MediaWiki.Common.MediaWikiLicense! License, TimBearCity.MediaWiki.Common.MediaWikiUser? User, string? Comment, int? Delta, string! Html) -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.<Clone>$() -> TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Deconstruct(out string! MimeType, out string! Url, out long? Size, out int? Width, out int? Height, out int? Duration) -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Duration.get -> int?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Duration.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Equals(TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? other) -> bool
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Height.get -> int?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Height.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.MediaWikiSearchResultThumbnail(string! MimeType, string! Url, long? Size = null, int? Width = null, int? Height = null, int? Duration = null) -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.MimeType.get -> string!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.MimeType.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Size.get -> long?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Size.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Url.get -> string!
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Url.init -> void
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Width.get -> int?
+TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Width.init -> void
+TimBearCity.MediaWiki.Common.MediaWikiUser
+TimBearCity.MediaWiki.Common.MediaWikiUser.<Clone>$() -> TimBearCity.MediaWiki.Common.MediaWikiUser!
+TimBearCity.MediaWiki.Common.MediaWikiUser.Deconstruct(out int? Id, out string? Name) -> void
+TimBearCity.MediaWiki.Common.MediaWikiUser.Equals(TimBearCity.MediaWiki.Common.MediaWikiUser? other) -> bool
+TimBearCity.MediaWiki.Common.MediaWikiUser.Id.get -> int?
+TimBearCity.MediaWiki.Common.MediaWikiUser.Id.init -> void
+TimBearCity.MediaWiki.Common.MediaWikiUser.MediaWikiUser(int? Id, string? Name) -> void
+TimBearCity.MediaWiki.Common.MediaWikiUser.Name.get -> string?
+TimBearCity.MediaWiki.Common.MediaWikiUser.Name.init -> void
+Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions
+abstract TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata!
+abstract TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata!
+const TimBearCity.MediaWiki.MediaWikiClient.ActivitySourceName = "TimBearCity.MediaWiki" -> string!
+const TimBearCity.MediaWiki.MediaWikiClient.MaxSearchLimit = 100 -> int
+const TimBearCity.MediaWiki.MediaWikiOptions.Position = "MediaWiki" -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFile.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFile.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFile.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFileFormat.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFileFormat.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFileFormat.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFileRevision.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFileRevision.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFileRevision.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.ToString() -> string!
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.GetHashCode() -> int
+override TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.ToString() -> string!
+override TimBearCity.MediaWiki.Common.MediaWikiLicense.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Common.MediaWikiLicense.GetHashCode() -> int
+override TimBearCity.MediaWiki.Common.MediaWikiLicense.ToString() -> string!
+override TimBearCity.MediaWiki.Transform.MediaWikiLintError.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Transform.MediaWikiLintError.GetHashCode() -> int
+override TimBearCity.MediaWiki.Transform.MediaWikiLintError.ToString() -> string!
+override TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.GetHashCode() -> int
+override TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPage.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPage!
+override TimBearCity.MediaWiki.Pages.MediaWikiPage.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPage.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPage.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageBare.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageBare!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageBare.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageBare.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageBare.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.ToString() -> string!
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResult.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResult.GetHashCode() -> int
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResult.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.<Clone>$() -> TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml!
+override TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevision.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiRevision!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevision.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevision.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.ToString() -> string!
+override TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.GetHashCode() -> int
+override TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.ToString() -> string!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.<Clone>$() -> TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml!
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.GetHashCode() -> int
+override TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.ToString() -> string!
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.GetHashCode() -> int
+override TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.ToString() -> string!
+override TimBearCity.MediaWiki.Common.MediaWikiUser.Equals(object? obj) -> bool
+override TimBearCity.MediaWiki.Common.MediaWikiUser.GetHashCode() -> int
+override TimBearCity.MediaWiki.Common.MediaWikiUser.ToString() -> string!
+override sealed TimBearCity.MediaWiki.Pages.MediaWikiPage.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? other) -> bool
+override sealed TimBearCity.MediaWiki.Pages.MediaWikiPageBare.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? other) -> bool
+override sealed TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? other) -> bool
+override sealed TimBearCity.MediaWiki.Revisions.MediaWikiRevision.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? other) -> bool
+override sealed TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? other) -> bool
+override sealed TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? other) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision? left, TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision? left, TimBearCity.MediaWiki.Revisions.MediaWikiComparisonRevision? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection? left, TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection? left, TimBearCity.MediaWiki.Revisions.MediaWikiComparisonSection? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffEntry? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffHighlightRange? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffMoveInfo? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset? left, TimBearCity.MediaWiki.Revisions.MediaWikiDiffOffset? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFile.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFile? left, TimBearCity.MediaWiki.Files.MediaWikiFile? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFile.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFile? left, TimBearCity.MediaWiki.Files.MediaWikiFile? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileFormat.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFileFormat? left, TimBearCity.MediaWiki.Files.MediaWikiFileFormat? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileFormat.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFileFormat? left, TimBearCity.MediaWiki.Files.MediaWikiFileFormat? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFileOriginal? left, TimBearCity.MediaWiki.Files.MediaWikiFileOriginal? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileOriginal.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFileOriginal? left, TimBearCity.MediaWiki.Files.MediaWikiFileOriginal? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileRevision.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFileRevision? left, TimBearCity.MediaWiki.Files.MediaWikiFileRevision? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileRevision.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFileRevision? left, TimBearCity.MediaWiki.Files.MediaWikiFileRevision? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail? left, TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail? left, TimBearCity.MediaWiki.Files.MediaWikiFileThumbnail? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.operator !=(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails? left, TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails? right) -> bool
+static TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails.operator ==(TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails? left, TimBearCity.MediaWiki.Files.MediaWikiFileThumbnails? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink? left, TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink? left, TimBearCity.MediaWiki.Pages.MediaWikiPageLanguageLink? right) -> bool
+static TimBearCity.MediaWiki.Common.MediaWikiLicense.operator !=(TimBearCity.MediaWiki.Common.MediaWikiLicense? left, TimBearCity.MediaWiki.Common.MediaWikiLicense? right) -> bool
+static TimBearCity.MediaWiki.Common.MediaWikiLicense.operator ==(TimBearCity.MediaWiki.Common.MediaWikiLicense? left, TimBearCity.MediaWiki.Common.MediaWikiLicense? right) -> bool
+static TimBearCity.MediaWiki.Transform.MediaWikiLintError.operator !=(TimBearCity.MediaWiki.Transform.MediaWikiLintError? left, TimBearCity.MediaWiki.Transform.MediaWikiLintError? right) -> bool
+static TimBearCity.MediaWiki.Transform.MediaWikiLintError.operator ==(TimBearCity.MediaWiki.Transform.MediaWikiLintError? left, TimBearCity.MediaWiki.Transform.MediaWikiLintError? right) -> bool
+static TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.operator !=(TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? left, TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? right) -> bool
+static TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo.operator ==(TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? left, TimBearCity.MediaWiki.Transform.MediaWikiLintTemplateInfo? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPage.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPage? left, TimBearCity.MediaWiki.Pages.MediaWikiPage? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPage.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPage? left, TimBearCity.MediaWiki.Pages.MediaWikiPage? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageBare.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageBare? left, TimBearCity.MediaWiki.Pages.MediaWikiPageBare? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageBare.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageBare? left, TimBearCity.MediaWiki.Pages.MediaWikiPageBare? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageHistory? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistory? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistory.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageHistory? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistory? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryCount? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision? left, TimBearCity.MediaWiki.Pages.MediaWikiPageHistoryRevision? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? left, TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? left, TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiPageReference? left, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiPageReference.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiPageReference? left, TimBearCity.MediaWiki.Revisions.MediaWikiPageReference? right) -> bool
+static TimBearCity.MediaWiki.Search.MediaWikiSearchResult.operator !=(TimBearCity.MediaWiki.Search.MediaWikiSearchResult? left, TimBearCity.MediaWiki.Search.MediaWikiSearchResult? right) -> bool
+static TimBearCity.MediaWiki.Search.MediaWikiSearchResult.operator ==(TimBearCity.MediaWiki.Search.MediaWikiSearchResult? left, TimBearCity.MediaWiki.Search.MediaWikiSearchResult? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml? left, TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml? left, TimBearCity.MediaWiki.Pages.MediaWikiPageWithHtml? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevision.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiRevision? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevision? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevision.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiRevision? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevision? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionBare? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionComparison? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.operator !=(TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference? left, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference? right) -> bool
+static TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.operator ==(TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference? left, TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.operator !=(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml? right) -> bool
+static TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml.operator ==(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml? left, TimBearCity.MediaWiki.Revisions.MediaWikiRevisionWithHtml? right) -> bool
+static TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.operator !=(TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? left, TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? right) -> bool
+static TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail.operator ==(TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? left, TimBearCity.MediaWiki.Search.MediaWikiSearchResultThumbnail? right) -> bool
+static TimBearCity.MediaWiki.Common.MediaWikiUser.operator !=(TimBearCity.MediaWiki.Common.MediaWikiUser? left, TimBearCity.MediaWiki.Common.MediaWikiUser? right) -> bool
+static TimBearCity.MediaWiki.Common.MediaWikiUser.operator ==(TimBearCity.MediaWiki.Common.MediaWikiUser? left, TimBearCity.MediaWiki.Common.MediaWikiUser? right) -> bool
+static Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMediaWikiClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configurationSection) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+static Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMediaWikiClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<TimBearCity.MediaWiki.MediaWikiOptions!>! configureOptions) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+static Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMediaWikiClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! name, Microsoft.Extensions.Configuration.IConfiguration! configurationSection) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+static Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMediaWikiClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! name, System.Action<TimBearCity.MediaWiki.MediaWikiOptions!>! configureOptions) -> Microsoft.Extensions.DependencyInjection.IHttpClientBuilder!
+virtual TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.EqualityContract.get -> System.Type!
+virtual TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.Equals(TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata? other) -> bool
+virtual TimBearCity.MediaWiki.Pages.MediaWikiPageMetadata.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.EqualityContract.get -> System.Type!
+virtual TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.Equals(TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata? other) -> bool
+virtual TimBearCity.MediaWiki.Revisions.MediaWikiRevisionMetadata.PrintMembers(System.Text.StringBuilder! builder) -> bool

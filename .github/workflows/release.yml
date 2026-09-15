@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish, without a leading "v" (e.g. 1.2.3).
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to NuGet
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      contents: read
+      # Trusted publishing: the job's OIDC token is exchanged for a short-lived NuGet API key, so no
+      # long-lived key is stored anywhere. The policy on nuget.org names this repository, this
+      # workflow file and the nuget environment.
+      id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "Publishing version $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # Before anything is pushed, so a version without a changelog entry never reaches NuGet.
+      - name: Extract release notes
+        run: |
+          mkdir -p artifacts
+          python3 .github/scripts/changelog-section.py "${{ steps.version.outputs.version }}" > artifacts/release-notes.md
+
+      - name: Pack
+        run: >
+          dotnet pack --configuration Release --output artifacts
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nuget-packages-${{ steps.version.outputs.version }}
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+            artifacts/release-notes.md
+          if-no-files-found: error
+
+      # The temporary key lives for an hour, so it is requested right before the push.
+      - name: Log in to NuGet
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          # The nuget.org profile name, not the email address.
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+  github-release:
+    name: Create GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: nuget-packages-${{ needs.publish.outputs.version }}
+          path: artifacts
+
+      # A manual run has no tag yet; gh creates one at the commit the workflow ran on. A pre-release
+      # version (1.2.3-beta.1) is marked as such so it does not become the "latest" release.
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          PRERELEASE=()
+          case "$VERSION" in *-*) PRERELEASE=(--prerelease) ;; esac
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file artifacts/release-notes.md \
+            "${PRERELEASE[@]}" \
+            artifacts/*.nupkg artifacts/*.snupkg

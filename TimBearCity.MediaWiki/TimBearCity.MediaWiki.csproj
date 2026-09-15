@@ -23,9 +23,9 @@
       onto a newer one just to use this package. NuGet versions are floors; a net8.0 app on 8.x stays on 8.x.
     -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
         <!--
           The in-box System.Text.Json on .NET 8 predates RespectNullableAnnotations and
           RespectRequiredConstructorParameters, so this one is deliberately not held to the 8.x floor. It pulls in
@@ -43,6 +43,7 @@
     <!-- Build-time only; consumers do not take a dependency on it. -->
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     </ItemGroup>
 
 </Project>

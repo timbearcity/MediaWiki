@@ -1,0 +1,131 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+# Prose is hard-wrapped at the same width as the code, so Rider's Markdown reformat reflows it the same way everywhere.
+max_line_length = 160
+
+# Rider does not know dotnet_diagnostic IDs or csharp_style_prefer_primary_constructors; dotnet build still honours them.
+# noinspection EditorConfigKeyCorrectness
+[*.cs]
+# Rider draws its visual guide here; ReSharper wraps code and XML doc comments past it.
+max_line_length = 160
+
+## Roslyn: enforced on build
+
+# Namespaces and usings
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+dotnet_diagnostic.IDE0005.severity = warning
+
+# var
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+# Expression bodies are for properties only; everything that takes a parameter list gets a block body.
+csharp_style_expression_bodied_methods = false:warning
+csharp_style_expression_bodied_local_functions = false:warning
+csharp_style_expression_bodied_constructors = false:warning
+csharp_style_expression_bodied_operators = false:warning
+csharp_style_expression_bodied_properties = true:suggestion
+
+# Modern C# constructs
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_range_operator = true:suggestion
+csharp_prefer_braces = true:warning
+csharp_prefer_simple_using_statement = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+
+# Accessibility and immutability
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+dotnet_style_readonly_field = true:warning
+
+# Naming: constants are PascalCase at every accessibility, and come first so the field rules below do not claim them.
+dotnet_naming_rule.const_pascal.symbols = const_fields
+dotnet_naming_rule.const_pascal.style = pascal_case
+dotnet_naming_rule.const_pascal.severity = warning
+dotnet_naming_symbols.const_fields.applicable_kinds = field
+dotnet_naming_symbols.const_fields.applicable_accessibilities = *
+dotnet_naming_symbols.const_fields.required_modifiers = const
+
+# Naming: private static readonly fields are PascalCase
+dotnet_naming_rule.private_static_readonly_pascal.symbols = private_static_readonly_fields
+dotnet_naming_rule.private_static_readonly_pascal.style = pascal_case
+dotnet_naming_rule.private_static_readonly_pascal.severity = warning
+dotnet_naming_symbols.private_static_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.private_static_readonly_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_readonly_fields.required_modifiers = static, readonly
+
+# Naming: other private fields are _camelCase
+dotnet_naming_rule.private_fields_underscored.symbols = private_fields
+dotnet_naming_rule.private_fields_underscored.style = underscore_camel_case
+dotnet_naming_rule.private_fields_underscored.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+# Naming styles
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+
+## ReSharper/Rider: formatting only, ignored by Roslyn
+
+# No trailing commas in multiline or single-line lists
+resharper_csharp_trailing_comma_in_multiline_lists = false
+resharper_csharp_trailing_comma_in_singleline_lists = false
+
+# XML doc comments: no extra indent inside tags and no space before "/>" (matches dotnet/runtime and MS docs)
+resharper_xmldoc_indent_text = ZeroIndent
+resharper_xmldoc_indent_child_elements = ZeroIndent
+resharper_xmldoc_space_before_self_closing = false
+
+# Attributes stay on the same line as their owner unless the line would exceed max_line_length.
+# The default moves any attribute longer than 38 characters to its own line, which splits record parameters.
+resharper_max_attribute_length_for_same_line = 200
+
+# Parameter lists that exceed max_line_length go one parameter per line, starting after the "(".
+# Argument lists are left on the default fill-then-spill: chopping them also splits calls that end in a multiline lambda or initializer.
+resharper_csharp_wrap_parameters_style = chop_if_long
+resharper_csharp_wrap_after_declaration_lpar = true
+resharper_csharp_wrap_before_declaration_rpar = false
+
+# Registration extensions deliberately live in the consumer's DI namespace,
+# following the convention used by the Microsoft.Extensions.* packages.
+# noinspection EditorConfigKeyCorrectness
+[ServiceCollectionExtensions.cs]
+dotnet_diagnostic.IDE0130.severity = none
+# CA1034 fires on the C# extension block, which is not a nested type consumers can see.
+dotnet_diagnostic.CA1034.severity = none
+
+# The exception always carries a message and the MediaWiki error detail, so the
+# parameterless and message-only constructors CA1032 asks for would be misleading.
+# noinspection EditorConfigKeyCorrectness
+[MediaWikiException.cs]
+dotnet_diagnostic.CA1032.severity = none
+
+# URLs stay strings: these records mirror the JSON the API returns, and BaseUrl is bound from configuration.
+# noinspection EditorConfigKeyCorrectness
+[{MediaWikiFile,MediaWikiFileFormat,MediaWikiFileOriginal,MediaWikiFileThumbnail,MediaWikiLicense,MediaWikiOptions,MediaWikiPageBare,MediaWikiPageHistory,MediaWikiRevisionBare,MediaWikiSearchResultThumbnail}.cs]
+dotnet_diagnostic.CA1054.severity = none
+dotnet_diagnostic.CA1056.severity = none
+
+# Smoke tests check live data through Assert.All, so their lambdas use the parameter only in assertions (ReSharper/Rider only).
+[{MediaWikiClientReadSmokeTests,MediaWikiClientWriteSmokeTests}.cs]
+resharper_parameter_only_used_for_precondition_check_local_highlighting = none

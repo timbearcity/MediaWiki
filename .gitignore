@@ -1,0 +1,55 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+artifacts/
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+.nuget/
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper.user
+*.DotSettings.user
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.userosscache
+*.sln.docstates
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.trx
+
+## Local configuration and secrets
+appsettings.*.local.json
+*.local.json
+secrets.json
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Misc
+*.swp
+*~
+
+## Claude Code
+CLAUDE.md
+.claude/

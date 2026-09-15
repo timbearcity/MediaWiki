@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <Description>A .NET client for the MediaWiki REST API (/w/rest.php/v1/), covering every endpoint of the core API.</Description>
+        <PackageTags>mediawiki;wikimedia;wikipedia;wiki;wikitext;rest;api;client</PackageTags>
+    </PropertyGroup>
+
+    <PropertyGroup Label="API contract">
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <!-- Set to the latest version on NuGet once there is one; there is nothing to compare against before then. -->
+        <!-- <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion> -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="\" />
+        <!-- The analyzer package already adds these as AdditionalFiles; the default None glob would list them a second time. -->
+        <None Remove="PublicAPI.Shipped.txt;PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+
+    <!--
+      Each target references the lowest Microsoft.Extensions.* it can, so a consumer on an older stack is not forced
+      onto a newer one just to use this package. NuGet versions are floors; a net8.0 app on 8.x stays on 8.x.
+    -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+        <!--
+          The in-box System.Text.Json on .NET 8 predates RespectNullableAnnotations and
+          RespectRequiredConstructorParameters, so this one is deliberately not held to the 8.x floor. It pulls in
+          only System.IO.Pipelines and System.Text.Encodings.Web, not the Microsoft.Extensions.* graph.
+        -->
+        <PackageReference Include="System.Text.Json" Version="10.0.11" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+    </ItemGroup>
+
+    <!-- Build-time only; consumers do not take a dependency on it. -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" PrivateAssets="all" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Weekly, so a change on the wiki's side surfaces without waiting for a push.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      smoke:
+        description: Also run the smoke tests against the English Wikipedia.
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  MINIMUM_COVERAGE: 100
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit-messages:
+    name: Commit messages
+    # Only the commits a push or a pull request brings; a tag, the weekly run and a dispatch add none.
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check against CONTRIBUTING.md
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # A new branch has no "before", and a force push may name a commit that is gone; then only the head is checked.
+          # A root commit has no parent either, so the range is then the head alone.
+          if [ "${BASE}" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${BASE}" 2>/dev/null; then
+            if git rev-parse -q --verify "${HEAD}~1" >/dev/null; then
+              range="${HEAD}~1..${HEAD}"
+            else
+              range="${HEAD}"
+            fi
+          else
+            range="${BASE}..${HEAD}"
+          fi
+          bash .github/scripts/check-commit-message.sh --range "${range}"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          # The tests run on every target the library ships for, so the older runtime is installed rather than
+          # taken from the runner image, which may drop it.
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore and audit dependencies
+        run: dotnet restore -warnaserror:NU1901,NU1902,NU1903,NU1904
+
+      - name: Verify formatting
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test with coverage
+        id: test
+        run: |
+          if [ -z "$(find . -name '*.Tests.csproj' -not -path '*/bin/*' -not -path '*/obj/*')" ]; then
+            echo "::warning::No test projects found; skipping tests."
+            echo "ran=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ran=true" >> "$GITHUB_OUTPUT"
+          # Coverage is a property of the source, so it is measured once, on the newest target.
+          dotnet test --configuration Release --no-build --verbosity normal --framework net8.0
+          dotnet test --configuration Release --no-build --verbosity normal --framework net10.0 -- \
+            --coverage --coverage-settings TimBearCity.MediaWiki.Tests/CodeCoverage.config \
+            --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+
+      - name: Check coverage
+        if: steps.test.outputs.ran == 'true'
+        run: python3 .github/scripts/check-coverage.py --minimum "$MINIMUM_COVERAGE" --badge README.md
+
+      - name: Upload coverage report
+        if: always() && steps.test.outputs.ran == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-cobertura
+          path: '**/coverage.cobertura.xml'
+          if-no-files-found: error
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
+
+  smoke:
+    name: Smoke test against en.wikipedia.org
+    # Opt-in: the weekly run and the workflow_dispatch checkbox. Pushes and pull requests never depend on a wiki being up.
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.smoke)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Only for the step that reports a failed weekly run.
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run read smoke tests
+        env:
+          MEDIAWIKI_SMOKE_READ_BASE_URL: https://en.wikipedia.org/w/rest.php/v1/
+        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*ReadSmokeTests"
+
+      - name: Report the failure in an issue
+        # Nobody watches the Actions tab for a scheduled run, so a failure there opens an issue, or adds to the open one.
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title='Weekly smoke tests against en.wikipedia.org failed'
+          body="The scheduled read smoke tests failed: ${RUN_URL}
+
+          Either the English Wikipedia changed what it serves, or it was unreachable for the run. The logs tell which."
+          number="$(gh issue list --state open --search "\"${title}\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -z "${number}" ]; then
+            gh issue create --title "${title}" --body "${body}"
+          else
+            gh issue comment "${number}" --body "${body}"
+          fi
+
+  smoke-container:
+    name: Smoke test against MediaWiki ${{ matrix.mediawiki }}
+    # Runs with the code: the wiki is created for the job from a pinned image and discarded with it, so no secrets and nothing real is involved.
+    # The oldest supported LTS and the current stable release bound the versions the client is known to work with.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mediawiki: [ '1.43', '1.46' ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Start a throwaway wiki
+        id: wiki
+        run: echo "base_url=$(bash .github/scripts/start-throwaway-wiki.sh ${{ matrix.mediawiki }})" >> "$GITHUB_OUTPUT"
+
+      - name: Run smoke tests
+        env:
+          MEDIAWIKI_SMOKE_READ_BASE_URL: ${{ steps.wiki.outputs.base_url }}
+          MEDIAWIKI_SMOKE_READ_PAGE: Smoke_page
+          MEDIAWIKI_SMOKE_READ_FILE: File:Smoke.png
+          MEDIAWIKI_SMOKE_WRITE_BASE_URL: ${{ steps.wiki.outputs.base_url }}
+        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*SmokeTests"
+
+      - name: Show wiki logs
+        if: failure()
+        run: docker logs smoke-wiki

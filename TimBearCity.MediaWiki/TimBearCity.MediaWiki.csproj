@@ -8,8 +8,8 @@
 
     <PropertyGroup Label="API contract">
         <EnablePackageValidation>true</EnablePackageValidation>
-        <!-- Set to the latest version on NuGet once there is one; there is nothing to compare against before then. -->
-        <!-- <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion> -->
+        <!-- The latest version on NuGet; bumped as part of each release. -->
+        <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     </PropertyGroup>
 
     <ItemGroup>

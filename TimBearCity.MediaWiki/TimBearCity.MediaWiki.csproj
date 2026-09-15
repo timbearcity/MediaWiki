@@ -31,7 +31,7 @@
           RespectRequiredConstructorParameters, so this one is deliberately not held to the 8.x floor. It pulls in
           only System.IO.Pipelines and System.Text.Encodings.Web, not the Microsoft.Extensions.* graph.
         -->
-        <PackageReference Include="System.Text.Json" Version="10.0.11" />
+        <PackageReference Include="System.Text.Json" Version="10.0.12" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

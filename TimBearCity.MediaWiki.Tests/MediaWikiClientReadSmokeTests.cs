@@ -352,7 +352,17 @@ public sealed class MediaWikiClientReadSmokeTests(ReadableWikiFixture wiki) : IC
     [InlineData(MediaWikiPageHistoryCountType.RevertedEdits)]
     public async Task GetPageHistoryCountAsync_EachType_ReturnsCount(MediaWikiPageHistoryCountType type)
     {
-        var count = await wiki.Client.GetPageHistoryCountAsync(wiki.Page, type, cancellationToken: TestContext.Current.CancellationToken);
+        MediaWikiPageHistoryCount? count;
+        try
+        {
+            count = await wiki.Client.GetPageHistoryCountAsync(wiki.Page, type, cancellationToken: TestContext.Current.CancellationToken);
+        }
+        catch (MediaWikiException exception) when (exception.ErrorKey == MediaWikiErrorKeys.PageHistoryCountTooManyRevisions)
+        {
+            // The minor count is the one type the wiki refuses outright, with a 500, for a page of more than 2000 edits.
+            Assert.Skip($"Page \"{wiki.Page}\" has too many revisions for the wiki to count its {type} revisions.");
+            throw;
+        }
 
         Assert.NotNull(count);
         Assert.True(count.Count >= 0);

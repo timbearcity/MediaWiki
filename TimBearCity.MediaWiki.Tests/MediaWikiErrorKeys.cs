@@ -26,6 +26,7 @@ internal static class MediaWikiErrorKeys
     public const string NonexistentTitle = "rest-nonexistent-title";
     public const string NonexistentTitleRevision = "rest-nonexistent-title-revision";
     public const string PageHistoryCountParametersInvalid = "rest-pagehistorycount-parameters-invalid";
+    public const string PageHistoryCountTooManyRevisions = "rest-pagehistorycount-too-many-revisions";
     public const string PageHistoryIncompatibleParameters = "rest-pagehistory-incompatible-params";
     public const string PrefixMismatch = "rest-prefix-mismatch";
     public const string UpdateCannotCreatePage = "rest-update-cannot-create-page";

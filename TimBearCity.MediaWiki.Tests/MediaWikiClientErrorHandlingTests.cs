@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using TimBearCity.MediaWiki.Pages;
 using Xunit;
 
 namespace TimBearCity.MediaWiki.Tests;
@@ -266,6 +267,29 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageHistoryCountAsync_TooManyRevisions_ReportsNotTransient()
+    {
+        const string errorJson = $$"""
+                                   {
+                                     "errorKey": "{{MediaWikiErrorKeys.PageHistoryCountTooManyRevisions}}",
+                                     "messageTranslations": { "en": "The specified title contains too many revisions to retrieve this count." },
+                                     "httpCode": 500,
+                                     "httpReason": "Internal Server Error"
+                                   }
+                                   """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.InternalServerError);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            client.GetPageHistoryCountAsync("Albert_Einstein", MediaWikiPageHistoryCountType.Minor, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.PageHistoryCountTooManyRevisions, exception.ErrorKey);
+        Assert.False(exception.IsTransient);
+    }
+
+    [Fact]
     public async Task GetPageHtmlAsync_EndpointUnknownToWiki_ThrowsMediaWikiException()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NoMatch);
@@ -287,6 +311,29 @@ public sealed class MediaWikiClientErrorHandlingTests
         var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHtmlAsync("Bad|Title", TestContext.Current.CancellationToken));
 
         Assert.Equal(MediaWikiErrorKeys.NonexistentTitle, exception.ErrorKey);
+    }
+
+    [Fact]
+    public async Task SearchPagesAsync_SearchError_ReportsNotTransient()
+    {
+        const string errorJson = $$"""
+                                   {
+                                     "error-keys": ["cirrussearch-regex-syntax-error"],
+                                     "errorKey": "{{MediaWikiErrorKeys.SearchError}}",
+                                     "messageTranslations": { "en": "Error when returning search results: Regular expression syntax error at unknown: unknown" },
+                                     "httpCode": 500,
+                                     "httpReason": "Internal Server Error"
+                                   }
+                                   """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.InternalServerError);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.SearchPagesAsync("insource:/[/", 10, TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.SearchError, exception.ErrorKey);
+        Assert.False(exception.IsTransient);
     }
 
     [Fact]

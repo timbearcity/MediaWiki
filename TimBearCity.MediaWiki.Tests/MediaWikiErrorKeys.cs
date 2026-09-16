@@ -29,5 +29,6 @@ internal static class MediaWikiErrorKeys
     public const string PageHistoryCountTooManyRevisions = "rest-pagehistorycount-too-many-revisions";
     public const string PageHistoryIncompatibleParameters = "rest-pagehistory-incompatible-params";
     public const string PrefixMismatch = "rest-prefix-mismatch";
+    public const string SearchError = "rest-search-error";
     public const string UpdateCannotCreatePage = "rest-update-cannot-create-page";
 }

@@ -101,7 +101,7 @@ public sealed class MediaWikiClientPageDetailTests
 
         var files = await new MediaWikiClient(httpClient).GetPageFilesAsync("Albert Einstein", TestContext.Current.CancellationToken);
 
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein/links/media", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/links/media", handler.Request.RequestUri?.AbsoluteUri);
 
         Assert.NotNull(files);
         Assert.Equal(2, files.Count);
@@ -151,7 +151,7 @@ public sealed class MediaWikiClientPageDetailTests
 
         var links = await new MediaWikiClient(httpClient).GetPageLanguageLinksAsync("Albert Einstein", TestContext.Current.CancellationToken);
 
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein/links/language", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/links/language", handler.Request.RequestUri?.AbsoluteUri);
 
         Assert.NotNull(links);
         Assert.Equal(2, links.Count);

@@ -20,6 +20,9 @@ compares each release against the previous one, so a change to the contract cann
 
 - `GetPageAsync`, `GetPageBareAsync` and `GetPageWithHtmlAsync` no longer throw for pages in the `MediaWiki:` namespace, such as `MediaWiki:Common.css`
   ([#6](https://github.com/timbearcity/MediaWiki/issues/6)).
+- `GetPageHistoryCountAsync` no longer fails with `400 Bad Request` when the key contains spaces, such as `Albert Einstein`
+  ([#7](https://github.com/timbearcity/MediaWiki/issues/7)). The page endpoints now send spaces as underscores, the key form MediaWiki stores, so every page
+  request lands directly instead of behind a `301` to the normalized title.
 
 ## [0.1.0] - 2026-09-15
 

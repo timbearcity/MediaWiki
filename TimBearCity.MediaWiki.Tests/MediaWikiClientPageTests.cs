@@ -64,7 +64,8 @@ public sealed class MediaWikiClientPageTests
     }
 
     [Theory]
-    [InlineData("Albert Einstein", "Albert%20Einstein")]
+    // A title with spaces goes out as the key the wiki stores, so the request lands without a redirect.
+    [InlineData("Albert Einstein", "Albert_Einstein")]
     // Each character outside ASCII goes out as its percent-encoded UTF-8 bytes.
     [InlineData("太陽系", "%E5%A4%AA%E9%99%BD%E7%B3%BB")]
     public async Task GetPageAsync_KeyNeedingEscaping_RequestsEscapedPageEndpoint(string key, string expectedSegment)
@@ -193,7 +194,7 @@ public sealed class MediaWikiClientPageTests
 
         var page = await new MediaWikiClient(httpClient).GetPageBareAsync("Albert Einstein", TestContext.Current.CancellationToken);
 
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein/bare", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/bare", handler.Request.RequestUri?.AbsoluteUri);
         Assert.NotNull(page);
         Assert.Equal(EinsteinPage.Id, page.Id);
         Assert.Equal(EinsteinPage.HtmlUrl, page.HtmlUrl);
@@ -231,7 +232,7 @@ public sealed class MediaWikiClientPageTests
 
         var htmlResponse = await new MediaWikiClient(httpClient).GetPageHtmlAsync("Albert Einstein", TestContext.Current.CancellationToken);
 
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein/html", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/html", handler.Request.RequestUri?.AbsoluteUri);
         Assert.Equal(MediaTypeNames.Text.Html, Assert.Single(handler.Request.Headers.Accept).MediaType);
         Assert.Equal(EinsteinPage.Html, htmlResponse);
     }
@@ -267,7 +268,7 @@ public sealed class MediaWikiClientPageTests
 
         var page = await new MediaWikiClient(httpClient).GetPageWithHtmlAsync("Albert Einstein", TestContext.Current.CancellationToken);
 
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein/with_html", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/with_html", handler.Request.RequestUri?.AbsoluteUri);
         Assert.NotNull(page);
         Assert.Equal(EinsteinPage.Id, page.Id);
         Assert.Equal(EinsteinPage.Html, page.Html);

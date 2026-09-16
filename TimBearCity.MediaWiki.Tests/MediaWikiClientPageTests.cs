@@ -5,6 +5,23 @@ namespace TimBearCity.MediaWiki.Tests;
 
 public sealed class MediaWikiClientPageTests
 {
+    /// <summary>
+    /// A page in the <c>MediaWiki:</c> namespace as Wikimedia wikis answer it: the page exists and has content, but the
+    /// page and revision ids are 0 and the revision timestamp is null.
+    /// </summary>
+    private const string MediaWikiNamespacePageJson =
+        """
+        {
+          "id": 0,
+          "key": "MediaWiki:Common.css",
+          "title": "MediaWiki:Common.css",
+          "latest": { "id": 0, "timestamp": null },
+          "content_model": "css",
+          "license": { "title": "CC BY-SA 4.0", "url": "https://creativecommons.org/licenses/by-sa/4.0/" },
+          "source": "/* CSS placed here will be applied to all skins */"
+        }
+        """;
+
     private const string RedirectPageJson =
         """
         {
@@ -71,6 +88,22 @@ public sealed class MediaWikiClientPageTests
         var page = await new MediaWikiClient(httpClient).GetPageAsync("<>", TestContext.Current.CancellationToken);
 
         Assert.Null(page);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_MediaWikiNamespacePage_ReturnsPageWithPlaceholderRevision()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(MediaWikiNamespacePageJson);
+        using var httpClient = handler.CreateClient();
+
+        var page = await new MediaWikiClient(httpClient).GetPageAsync("MediaWiki:Common.css", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(page);
+        Assert.Equal(0, page.Id);
+        Assert.Equal(0, page.Latest.Id);
+        Assert.Null(page.Latest.Timestamp);
+        Assert.Equal("css", page.ContentModel);
+        Assert.Equal("/* CSS placed here will be applied to all skins */", page.Source);
     }
 
     [Fact]

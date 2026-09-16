@@ -11,6 +11,16 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Changed
+
+- `MediaWikiRevisionReference.Timestamp` is now `DateTimeOffset?`. Pages in the `MediaWiki:` namespace come back from Wikimedia wikis with a placeholder
+  `latest` of `{"id": 0, "timestamp": null}`, which the non-nullable property could not hold.
+
+### Fixed
+
+- `GetPageAsync`, `GetPageBareAsync` and `GetPageWithHtmlAsync` no longer throw for pages in the `MediaWiki:` namespace, such as `MediaWiki:Common.css`
+  ([#6](https://github.com/timbearcity/MediaWiki/issues/6)).
+
 ## [0.1.0] - 2026-09-15
 
 ### Added

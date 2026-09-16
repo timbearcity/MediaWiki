@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mime;
 using System.Text.Json;
 using TimBearCity.MediaWiki.Revisions;
@@ -147,6 +148,23 @@ public sealed class MediaWikiClientRevisionTests
         Assert.Empty(handler.Requests);
     }
 
+    [Theory]
+    [InlineData(MediaWikiErrorKeys.NonexistentRevision)]
+    [InlineData(MediaWikiErrorKeys.NonexistentTitle)]
+    public async Task CompareRevisionsAsync_NotFoundWithOtherEndpointsErrorKey_ThrowsMediaWikiException(string errorKey)
+    {
+        // The compare endpoint has a key of its own for a missing revision; the keys the other endpoints use are not absence here.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(errorKey);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            client.CompareRevisionsAsync(847170467, 851733941, TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(errorKey, exception.ErrorKey);
+    }
+
     [Fact]
     public async Task CompareRevisionsAsync_ReturnsComparison()
     {
@@ -242,6 +260,24 @@ public sealed class MediaWikiClientRevisionTests
 
         Assert.Equal("id", exception.ParamName);
         Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(MediaWikiErrorKeys.CannotLoadFile)]
+    [InlineData(MediaWikiErrorKeys.InvalidTitle)]
+    [InlineData(MediaWikiErrorKeys.NoRevision)]
+    [InlineData(MediaWikiErrorKeys.NonexistentTitle)]
+    public async Task GetRevisionAsync_NotFoundWithPageOrFileErrorKey_ThrowsMediaWikiException(string errorKey)
+    {
+        // A revision endpoint takes no title, so a key that reports a page or file missing is not absence here.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(errorKey);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetRevisionAsync(1234567, TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(errorKey, exception.ErrorKey);
     }
 
     [Fact]

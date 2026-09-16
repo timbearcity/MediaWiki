@@ -21,8 +21,10 @@ internal static class MediaWikiErrorKeys
     public const string InvalidTitleOnEdit = "apierror-invalidtitle";
     public const string MissingTitle = "apierror-missingtitle";
     public const string NoMatch = "rest-no-match";
+    public const string NoRevision = "rest-no-revision";
     public const string NonexistentRevision = "rest-nonexistent-revision";
     public const string NonexistentTitle = "rest-nonexistent-title";
+    public const string NonexistentTitleRevision = "rest-nonexistent-title-revision";
     public const string PageHistoryCountParametersInvalid = "rest-pagehistorycount-parameters-invalid";
     public const string PageHistoryIncompatibleParameters = "rest-pagehistory-incompatible-params";
     public const string PrefixMismatch = "rest-prefix-mismatch";

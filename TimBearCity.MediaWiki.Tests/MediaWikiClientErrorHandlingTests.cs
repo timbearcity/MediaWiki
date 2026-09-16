@@ -107,6 +107,10 @@ public sealed class MediaWikiClientErrorHandlingTests
     [InlineData(MediaWikiErrorKeys.PrefixMismatch, "did not recognize the path")]
     // Any other key is not a routing problem, so the message names the key and offers no hint.
     [InlineData("rest-something-else", "(rest-something-else).")]
+    // A key under which another kind of endpoint reports absence is not absence here: a page endpoint never sends it.
+    [InlineData(MediaWikiErrorKeys.CannotLoadFile, "(rest-cannot-load-file).")]
+    [InlineData(MediaWikiErrorKeys.CompareNonexistent, "(rest-compare-nonexistent).")]
+    [InlineData(MediaWikiErrorKeys.NonexistentTitleRevision, "(rest-nonexistent-title-revision).")]
     public async Task GetPageAsync_NotFoundWithUnrelatedErrorKey_ThrowsMediaWikiException(string errorKey, string expectedDetail)
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(errorKey);

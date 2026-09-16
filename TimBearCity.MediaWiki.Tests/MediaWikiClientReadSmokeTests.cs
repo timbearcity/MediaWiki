@@ -314,6 +314,16 @@ public sealed class MediaWikiClientReadSmokeTests(ReadableWikiFixture wiki) : IC
     }
 
     [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
+    public async Task GetPageHistoryAsync_OlderThanMissingRevision_ThrowsNotFound()
+    {
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            wiki.Client.GetPageHistoryAsync(wiki.Page, MissingRevisionId, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.NonexistentTitleRevision, exception.ErrorKey);
+    }
+
+    [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
     public async Task GetPageHistoryAsync_OlderThanNewest_ContinuesFromThere()
     {
         var newest = await wiki.Client.GetPageHistoryAsync(wiki.Page, cancellationToken: TestContext.Current.CancellationToken);
@@ -399,6 +409,22 @@ public sealed class MediaWikiClientReadSmokeTests(ReadableWikiFixture wiki) : IC
 
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
         Assert.Equal(MediaWikiErrorKeys.PageHistoryCountParametersInvalid, exception.ErrorKey);
+    }
+
+    [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
+    public async Task GetPageHistoryCountAsync_RangeFromMissingRevision_ThrowsNotFound()
+    {
+        var page = await GetPageBareAsync();
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => wiki.Client.GetPageHistoryCountAsync(
+            wiki.Page,
+            MediaWikiPageHistoryCountType.Edits,
+            MissingRevisionId,
+            page.Latest.Id,
+            TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.NonexistentRevision, exception.ErrorKey);
     }
 
     [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]

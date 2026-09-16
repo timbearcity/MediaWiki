@@ -93,6 +93,32 @@ public sealed class MediaWikiClientFileTests
     }
 
     [Fact]
+    public async Task GetFileAsync_FilePageDoesNotExist_ReturnsNull()
+    {
+        // A file page that was never created is a missing title rather than a file that cannot be loaded.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetFileAsync("File:Nonexistent.jpg", TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData(MediaWikiErrorKeys.NonexistentRevision)]
+    [InlineData(MediaWikiErrorKeys.NoRevision)]
+    public async Task GetFileAsync_NotFoundWithRevisionErrorKey_ThrowsMediaWikiException(string errorKey)
+    {
+        // A file endpoint takes no revision, so a key that reports one missing is not absence here.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(errorKey);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetFileAsync("File:Example.jpg", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(errorKey, exception.ErrorKey);
+    }
+
+    [Fact]
     public async Task GetFileAsync_ReturnsFileWithItsRenditions()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(FileJson);
@@ -152,6 +178,15 @@ public sealed class MediaWikiClientFileTests
         using var httpClient = handler.CreateClient();
 
         Assert.Null(await new MediaWikiClient(httpClient).GetFileThumbnailsAsync("File:Song.ogg", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetFileThumbnailsAsync_FilePageDoesNotExist_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetFileThumbnailsAsync("File:Nonexistent.jpg", TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -85,6 +85,15 @@ public sealed class MediaWikiClientPageDetailTests
     }
 
     [Fact]
+    public async Task GetPageFilesAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageFilesAsync("<>", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetPageFilesAsync_PageDoesNotExist_ReturnsNull()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
@@ -135,6 +144,15 @@ public sealed class MediaWikiClientPageDetailTests
     }
 
     [Fact]
+    public async Task GetPageLanguageLinksAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageLanguageLinksAsync("<>", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetPageLanguageLinksAsync_PageDoesNotExist_ReturnsNull()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
@@ -174,6 +192,15 @@ public sealed class MediaWikiClientPageDetailTests
         await Assert.ThrowsAsync<ArgumentException>(() => client.GetPageLintAsync(key, TestContext.Current.CancellationToken));
 
         Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
+    public async Task GetPageLintAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageLintAsync("<>", TestContext.Current.CancellationToken));
     }
 
     [Fact]

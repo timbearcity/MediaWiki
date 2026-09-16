@@ -1,3 +1,4 @@
+using System.Net;
 using TimBearCity.MediaWiki.Pages;
 using Xunit;
 
@@ -72,6 +73,15 @@ public sealed class MediaWikiClientPageHistoryTests
         Assert.Empty(handler.Requests);
     }
 
+    [Fact]
+    public async Task GetPageHistoryAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageHistoryAsync("<>", cancellationToken: TestContext.Current.CancellationToken));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -136,6 +146,21 @@ public sealed class MediaWikiClientPageHistoryTests
         Assert.EndsWith("history", history.Latest, StringComparison.Ordinal);
         Assert.EndsWith("older_than=1218700625", history.Older, StringComparison.Ordinal);
         Assert.Null(history.Newer);
+    }
+
+    [Fact]
+    public async Task GetPageHistoryAsync_RevisionNotOfPage_ThrowsMediaWikiException()
+    {
+        // The wiki answers this way both for a revision of another page and for one that does not exist at all.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitleRevision);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            client.GetPageHistoryAsync("Solar_System", 1374702991, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.NonexistentTitleRevision, exception.ErrorKey);
     }
 
     [Fact]
@@ -234,6 +259,20 @@ public sealed class MediaWikiClientPageHistoryTests
     }
 
     [Fact]
+    public async Task GetPageHistoryCountAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        var count = await new MediaWikiClient(httpClient).GetPageHistoryCountAsync(
+            "<>",
+            MediaWikiPageHistoryCountType.Edits,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Null(count);
+    }
+
+    [Fact]
     public async Task GetPageHistoryCountAsync_PageDoesNotExist_ReturnsNull()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
@@ -261,6 +300,24 @@ public sealed class MediaWikiClientPageHistoryTests
         Assert.NotNull(count);
         Assert.Equal(110, count.Count);
         Assert.False(count.IsLimitExceeded);
+    }
+
+    [Fact]
+    public async Task GetPageHistoryCountAsync_RevisionDoesNotExist_ThrowsMediaWikiException()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentRevision);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHistoryCountAsync(
+            "Solar_System",
+            MediaWikiPageHistoryCountType.Edits,
+            1,
+            2,
+            TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.NonexistentRevision, exception.ErrorKey);
     }
 
     [Theory]

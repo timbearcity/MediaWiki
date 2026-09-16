@@ -35,18 +35,18 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 - The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72 characters.
 - Footers are optional: `BREAKING CHANGE: ...`, `Fixes #12`, `Co-Authored-By: ...`.
 
-| Type       | Use                                                                                       | `CHANGELOG.md`      |
-|------------|-------------------------------------------------------------------------------------------|---------------------|
-| `feat`     | New public API or behaviour                                                               | Added               |
-| `fix`      | A bug fix                                                                                 | Fixed               |
-| `feat!`, `fix!` | A breaking change                                                                  | Changed or Removed  |
-| `docs`     | README, XML docs, `CHANGELOG.md`, this file                                               |                     |
-| `test`     | Unit and smoke tests                                                                      |                     |
-| `refactor` | A change that neither fixes a bug nor adds behaviour                                      |                     |
-| `style`    | Formatting only; prefer squashing it into the change that needed it                       |                     |
-| `build`    | Project files, NuGet packages, `Directory.Build.props`, `global.json`                     |                     |
-| `ci`       | Workflows and `.github/scripts`                                                           |                     |
-| `chore`    | Anything else: the dictionary, `.gitignore`, editor settings                              |                     |
+| Type            | Use                                                                   | `CHANGELOG.md`     |
+|-----------------|-----------------------------------------------------------------------|--------------------|
+| `feat`          | New public API or behaviour                                           | Added              |
+| `fix`           | A bug fix                                                             | Fixed              |
+| `feat!`, `fix!` | A breaking change                                                     | Changed or Removed |
+| `docs`          | README, XML docs, `CHANGELOG.md`, this file                           |                    |
+| `test`          | Unit and smoke tests                                                  |                    |
+| `refactor`      | A change that neither fixes a bug nor adds behaviour                  |                    |
+| `style`         | Formatting only; prefer squashing it into the change that needed it   |                    |
+| `build`         | Project files, NuGet packages, `Directory.Build.props`, `global.json` |                    |
+| `ci`            | Workflows and `.github/scripts`                                       |                    |
+| `chore`         | Anything else: the dictionary, `.gitignore`, editor settings          |                    |
 
 The last column is the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) section a commit of that type lands in, so the changelog for a release
 can be compiled from `git log`. Types without a section do not appear in the changelog.

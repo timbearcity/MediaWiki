@@ -172,16 +172,21 @@ jobs:
           fi
 
   smoke-container:
-    name: Smoke test against MediaWiki ${{ matrix.mediawiki }}
+    name: Smoke test against MediaWiki ${{ matrix.label }}
     # Runs with the code: the wiki is created for the job from a pinned image and discarded with it, so no secrets and nothing real is involved.
     # The oldest supported LTS and the current stable release bound the versions the client is known to work with.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        mediawiki: [ '1.43', '1.46' ]
+        include:
+          - { label: oldest supported LTS, mediawiki: '1.43' }
+          - { label: current stable, mediawiki: '1.46' }
 
     steps:
+      - name: Note the version
+        run: echo "MediaWiki ${{ matrix.mediawiki }}" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

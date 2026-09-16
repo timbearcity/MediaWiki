@@ -27,6 +27,10 @@ compares each release against the previous one, so a change to the contract cann
   `olderThan`, `newerThan`, `fromRevisionId` or `toRevisionId` names a revision that does not exist or is not a revision of the page
   ([#8](https://github.com/timbearcity/MediaWiki/issues/8)). `null` again means only that the page does not exist. Each endpoint now treats only the
   error keys for its own resource as absence, so a revision endpoint no longer returns `null` for a page key either.
+- `MediaWikiException.IsTransient` is now `false` for a `500` whose error key blames the request rather than the wiki:
+  `rest-pagehistorycount-too-many-revisions`, which `GetPageHistoryCountAsync` gets for a `Minor` count on a page of more than 2000 edits, and
+  `rest-search-error`, which the search methods get for a query the engine rejects, such as a malformed `insource:` regular expression
+  ([#9](https://github.com/timbearcity/MediaWiki/issues/9)). A retry policy keyed on `IsTransient` no longer repeats either.
 
 ## [0.1.0] - 2026-09-15
 

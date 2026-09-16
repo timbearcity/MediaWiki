@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Net;
 
 namespace TimBearCity.MediaWiki;
@@ -23,6 +24,17 @@ public sealed class MediaWikiException(
     Exception? innerException = null) : HttpRequestException(message, innerException, statusCode)
 {
     /// <summary>
+    /// The error keys MediaWiki answers with a <c>500</c> although the request itself is at fault, so that repeating
+    /// it gets the same answer: a page history count the wiki refuses because the page has too many revisions, and a
+    /// search the engine rejected, such as one with a malformed regular expression.
+    /// </summary>
+    private static readonly FrozenSet<string> PermanentServerErrorKeys = FrozenSet.ToFrozenSet(
+    [
+        "rest-pagehistorycount-too-many-revisions",
+        "rest-search-error"
+    ], StringComparer.Ordinal);
+
+    /// <summary>
     /// The machine-readable MediaWiki error key, e.g. <c>rest-nonexistent-title</c>, or <see langword="null"/> if the
     /// response did not carry one.
     /// </summary>
@@ -31,13 +43,14 @@ public sealed class MediaWikiException(
     /// <summary>
     /// Whether retrying the same request later may succeed: a timeout, a transport failure, a rate limit, or a
     /// server-side error. A response that exceeded <see cref="MediaWikiOptions.MaxResponseSize"/> is not one: the
-    /// wiki answered, and would answer the same way again.
+    /// wiki answered, and would answer the same way again. Nor is a <c>500</c> whose <see cref="ErrorKey"/> blames
+    /// the request, such as <c>rest-pagehistorycount-too-many-revisions</c> or <c>rest-search-error</c>.
     /// </summary>
     public bool IsTransient => StatusCode switch
     {
         null => InnerException is not HttpRequestException { HttpRequestError: HttpRequestError.ConfigurationLimitExceeded },
         HttpStatusCode.TooManyRequests or HttpStatusCode.RequestTimeout => true,
-        >= HttpStatusCode.InternalServerError => true,
+        >= HttpStatusCode.InternalServerError => ErrorKey is null || !PermanentServerErrorKeys.Contains(ErrorKey),
         _ => false
     };
 

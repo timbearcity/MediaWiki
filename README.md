@@ -302,12 +302,12 @@ wikitext. A `revisionId` without a `title` is refused, since a revision means no
 Every failure other than an absent page, revision or file throws `MediaWikiException`: a rejected request, a timeout, a connection failure, an unreadable body.
 It derives from `HttpRequestException`, so existing HTTP error handling still catches it, and carries the detail MediaWiki returns:
 
-| Member        | Notes                                                                                                        |
-|---------------|--------------------------------------------------------------------------------------------------------------|
-| `StatusCode`  | The response status, or `null` if no response arrived (timeout, DNS or TLS failure).                         |
-| `ErrorKey`    | MediaWiki's machine-readable key, e.g. `rest-no-match`, when the body carried one.                           |
-| `RetryAfter`  | The `Retry-After` delay, typically present on `429` and `503`.                                               |
-| `IsTransient` | `true` for a timeout, transport failure, rate limit or `5xx`; `false` for a response over `MaxResponseSize`. |
+| Member        | Notes                                                                                                                                                                                                                   |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `StatusCode`  | The response status, or `null` if no response arrived (timeout, DNS or TLS failure).                                                                                                                                    |
+| `ErrorKey`    | MediaWiki's machine-readable key, e.g. `rest-no-match`, when the body carried one.                                                                                                                                      |
+| `RetryAfter`  | The `Retry-After` delay, typically present on `429` and `503`.                                                                                                                                                          |
+| `IsTransient` | `true` for a timeout, transport failure, rate limit or `5xx`; `false` for a response over `MaxResponseSize`, and for a `500` that blames the request (`rest-pagehistorycount-too-many-revisions`, `rest-search-error`). |
 
 ```csharp
 try

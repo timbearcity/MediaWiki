@@ -23,6 +23,10 @@ compares each release against the previous one, so a change to the contract cann
 - `GetPageHistoryCountAsync` no longer fails with `400 Bad Request` when the key contains spaces, such as `Albert Einstein`
   ([#7](https://github.com/timbearcity/MediaWiki/issues/7)). The page endpoints now send spaces as underscores, the key form MediaWiki stores, so every page
   request lands directly instead of behind a `301` to the normalized title.
+- `GetPageHistoryAsync` and `GetPageHistoryCountAsync` now throw `MediaWikiException` with `404 Not Found`, rather than returning `null`, when
+  `olderThan`, `newerThan`, `fromRevisionId` or `toRevisionId` names a revision that does not exist or is not a revision of the page
+  ([#8](https://github.com/timbearcity/MediaWiki/issues/8)). `null` again means only that the page does not exist. Each endpoint now treats only the
+  error keys for its own resource as absence, so a revision endpoint no longer returns `null` for a page key either.
 
 ## [0.1.0] - 2026-09-15
 

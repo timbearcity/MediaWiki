@@ -44,22 +44,53 @@ public sealed class MediaWikiClient : IMediaWikiClient
     private const string HttpResponseStatusCodeTag = "http.response.status_code";
     private const string ServerAddressTag = "server.address";
 
+    /// <summary>The error keys under which the compare endpoint answers <c>404</c> because a revision is not there.</summary>
+    private static readonly FrozenSet<string> AbsentComparedRevisionErrorKeys = FrozenSet.ToFrozenSet(
+    [
+        "rest-compare-nonexistent"
+    ], StringComparer.Ordinal);
+
     /// <summary>
-    /// The error keys under which MediaWiki answers <c>404</c> because the page, revision or file is not there. A
-    /// title no page could have, such as one with angle brackets, counts too: the page endpoints answer it with
+    /// The error keys under which a file endpoint answers <c>404</c> because the file is not there: a file page without
+    /// a file behind it is <c>rest-cannot-load-file</c>, and no page at all is <c>rest-nonexistent-title</c>.
+    /// </summary>
+    private static readonly FrozenSet<string> AbsentFileErrorKeys = FrozenSet.ToFrozenSet(
+    [
+        "rest-cannot-load-file",
+        "rest-nonexistent-title"
+    ], StringComparer.Ordinal);
+
+    /// <summary>
+    /// The error keys under which a page endpoint answers <c>404</c> because the page, or its content, is not there.
+    /// A title no page could have, such as one with angle brackets, counts too: the page endpoints answer it with
     /// <c>rest-invalid-title</c> where the rest answer <c>rest-nonexistent-title</c>. Any other <c>404</c> is
     /// something else: an endpoint the wiki's version does not serve (<c>rest-no-match</c>), a base URL that misses
     /// the REST API, or a web server answering for it.
     /// </summary>
-    private static readonly FrozenSet<string> AbsentResourceErrorKeys = FrozenSet.ToFrozenSet(
+    private static readonly FrozenSet<string> AbsentPageErrorKeys = FrozenSet.ToFrozenSet(
     [
-        "rest-cannot-load-file",
-        "rest-compare-nonexistent",
         "rest-invalid-title",
         "rest-no-revision",
         "rest-nonexistent-revision",
-        "rest-nonexistent-title",
-        "rest-nonexistent-title-revision"
+        "rest-nonexistent-title"
+    ], StringComparer.Ordinal);
+
+    /// <summary>
+    /// The error keys under which a history endpoint answers <c>404</c> because the page is not there. These endpoints
+    /// also take revision identifiers, and answer one that does not exist, or is not a revision of the page, with
+    /// <c>rest-nonexistent-revision</c> or <c>rest-nonexistent-title-revision</c>: the page exists, so that is a
+    /// failure rather than absence.
+    /// </summary>
+    private static readonly FrozenSet<string> AbsentPageHistoryErrorKeys = FrozenSet.ToFrozenSet(
+    [
+        "rest-invalid-title",
+        "rest-nonexistent-title"
+    ], StringComparer.Ordinal);
+
+    /// <summary>The error keys under which a revision endpoint answers <c>404</c> because the revision is not there.</summary>
+    private static readonly FrozenSet<string> AbsentRevisionErrorKeys = FrozenSet.ToFrozenSet(
+    [
+        "rest-nonexistent-revision"
     ], StringComparer.Ordinal);
 
     /// <summary>See <see cref="ActivitySourceName"/>.</summary>
@@ -112,7 +143,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = string.Create(CultureInfo.InvariantCulture, $"revision/{fromRevisionId}/compare/{toRevisionId}");
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiRevisionComparison, cancellationToken);
+        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiRevisionComparison, AbsentComparedRevisionErrorKeys,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -141,7 +173,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = $"file/{Uri.EscapeDataString(title)}";
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFile, cancellationToken);
+        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFile, AbsentFileErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -151,7 +183,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = $"file/{Uri.EscapeDataString(title)}/thumbnails";
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFileThumbnails, cancellationToken,
+        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFileThumbnails, AbsentFileErrorKeys, cancellationToken,
             "rest-file-not-thumbnailable");
     }
 
@@ -160,7 +192,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetJsonOrNullAsync(BuildPageUri(key), MediaWikiJsonSerializerContext.Default.MediaWikiPage, cancellationToken);
+        return GetJsonOrNullAsync(BuildPageUri(key), MediaWikiJsonSerializerContext.Default.MediaWikiPage, AbsentPageErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -168,7 +200,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetJsonOrNullAsync(BuildPageUri(key, "bare"), MediaWikiJsonSerializerContext.Default.MediaWikiPageBare, cancellationToken);
+        return GetJsonOrNullAsync(BuildPageUri(key, "bare"), MediaWikiJsonSerializerContext.Default.MediaWikiPageBare, AbsentPageErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -179,6 +211,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
         var filesResponse = await GetJsonOrNullAsync(
             BuildPageUri(key, "links/media"),
             MediaWikiJsonSerializerContext.Default.MediaWikiPageFilesResponse,
+            AbsentPageErrorKeys,
             cancellationToken).ConfigureAwait(false);
 
         return filesResponse?.Files;
@@ -217,7 +250,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = AppendQuery(BuildPageUri(key, "history"), query);
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistory, cancellationToken);
+        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistory, AbsentPageHistoryErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -248,7 +281,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = AppendQuery($"{BuildPageUri(key, "history")}/counts/{GetQueryValue(type)}", query);
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistoryCount, cancellationToken);
+        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistoryCount, AbsentPageHistoryErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -256,7 +289,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetTextOrNullAsync(BuildPageUri(key, "html"), HtmlAccept, cancellationToken);
+        return GetTextOrNullAsync(BuildPageUri(key, "html"), HtmlAccept, AbsentPageErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -264,7 +297,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetJsonOrNullAsync(BuildPageUri(key, "links/language"), MediaWikiJsonSerializerContext.Default.PageLanguageLinks, cancellationToken);
+        return GetJsonOrNullAsync(BuildPageUri(key, "links/language"), MediaWikiJsonSerializerContext.Default.PageLanguageLinks, AbsentPageErrorKeys,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -272,7 +306,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetJsonOrNullAsync(BuildPageUri(key, "lint"), MediaWikiJsonSerializerContext.Default.LintErrors, cancellationToken);
+        return GetJsonOrNullAsync(BuildPageUri(key, "lint"), MediaWikiJsonSerializerContext.Default.LintErrors, AbsentPageErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -280,7 +314,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return GetJsonOrNullAsync(BuildPageUri(key, "with_html"), MediaWikiJsonSerializerContext.Default.MediaWikiPageWithHtml, cancellationToken);
+        return GetJsonOrNullAsync(BuildPageUri(key, "with_html"), MediaWikiJsonSerializerContext.Default.MediaWikiPageWithHtml, AbsentPageErrorKeys,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -288,7 +323,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
 
-        return GetJsonOrNullAsync(BuildRevisionUri(id), MediaWikiJsonSerializerContext.Default.MediaWikiRevision, cancellationToken);
+        return GetJsonOrNullAsync(BuildRevisionUri(id), MediaWikiJsonSerializerContext.Default.MediaWikiRevision, AbsentRevisionErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -296,7 +331,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
 
-        return GetJsonOrNullAsync(BuildRevisionUri(id, "bare"), MediaWikiJsonSerializerContext.Default.MediaWikiRevisionBare, cancellationToken);
+        return GetJsonOrNullAsync(BuildRevisionUri(id, "bare"), MediaWikiJsonSerializerContext.Default.MediaWikiRevisionBare, AbsentRevisionErrorKeys,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -304,7 +340,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
 
-        return GetTextOrNullAsync(BuildRevisionUri(id, "html"), HtmlAccept, cancellationToken);
+        return GetTextOrNullAsync(BuildRevisionUri(id, "html"), HtmlAccept, AbsentRevisionErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -312,7 +348,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
 
-        return GetJsonOrNullAsync(BuildRevisionUri(id, "lint"), MediaWikiJsonSerializerContext.Default.LintErrors, cancellationToken);
+        return GetJsonOrNullAsync(BuildRevisionUri(id, "lint"), MediaWikiJsonSerializerContext.Default.LintErrors, AbsentRevisionErrorKeys, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -320,7 +356,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
 
-        return GetJsonOrNullAsync(BuildRevisionUri(id, "with_html"), MediaWikiJsonSerializerContext.Default.MediaWikiRevisionWithHtml, cancellationToken);
+        return GetJsonOrNullAsync(BuildRevisionUri(id, "with_html"), MediaWikiJsonSerializerContext.Default.MediaWikiRevisionWithHtml, AbsentRevisionErrorKeys,
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -578,12 +615,14 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// </summary>
     /// <param name="requestUri">The endpoint that was fetched, for the exception message.</param>
     /// <param name="response">The response to judge.</param>
+    /// <param name="absentErrorKeys">The error keys under which the endpoint answers <c>404</c> because what it serves is not there.</param>
     /// <param name="cancellationToken">Token used to cancel reading the body.</param>
     /// <param name="absentErrorKey">An error key that also counts as absence for this endpoint, whatever its status.</param>
     /// <returns><see langword="true"/> if the wiki does not have what was asked for; <see langword="false"/> if the response succeeded.</returns>
     private static async Task<bool> IsAbsentAsync(
         string requestUri,
         HttpResponseMessage response,
+        FrozenSet<string> absentErrorKeys,
         CancellationToken cancellationToken,
         string? absentErrorKey = null)
     {
@@ -595,7 +634,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
         var error = await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false);
 
         if (error?.ErrorKey is { } errorKey &&
-            (errorKey == absentErrorKey || (response.StatusCode is HttpStatusCode.NotFound && AbsentResourceErrorKeys.Contains(errorKey))))
+            (errorKey == absentErrorKey || (response.StatusCode is HttpStatusCode.NotFound && absentErrorKeys.Contains(errorKey))))
         {
             // Not a failure, but worth seeing in a trace: the span would otherwise read as a plain success.
             CurrentActivity?.SetTag(ErrorKeyTag, errorKey);
@@ -726,12 +765,14 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// <summary>Fetches a JSON response, treating a missing page, revision or file as <see langword="null"/>.</summary>
     /// <param name="requestUri">The endpoint to fetch.</param>
     /// <param name="typeInfo">The metadata for the record the response deserializes into.</param>
+    /// <param name="absentErrorKeys">The error keys under which the endpoint answers <c>404</c> because what it serves is not there.</param>
     /// <param name="cancellationToken">Token used to cancel the request.</param>
     /// <param name="absentErrorKey">An error key that also counts as absence for this endpoint, whatever its status.</param>
     /// <param name="operation">The public method being served, which names the activity; supplied by the compiler.</param>
     private async Task<T?> GetJsonOrNullAsync<T>(
         string requestUri,
         JsonTypeInfo<T> typeInfo,
+        FrozenSet<string> absentErrorKeys,
         CancellationToken cancellationToken,
         string? absentErrorKey = null,
         [CallerMemberName] string operation = "")
@@ -740,7 +781,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
         using var activity = StartActivity(operation);
         using var response = await GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
 
-        return await IsAbsentAsync(requestUri, response, cancellationToken, absentErrorKey).ConfigureAwait(false)
+        return await IsAbsentAsync(requestUri, response, absentErrorKeys, cancellationToken, absentErrorKey).ConfigureAwait(false)
             ? null
             : await ReadJsonAsync(requestUri, response, typeInfo, cancellationToken).ConfigureAwait(false);
     }
@@ -748,18 +789,20 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// <summary>Fetches a response that carries markup rather than JSON, treating a missing one as <see langword="null"/>.</summary>
     /// <param name="requestUri">The endpoint to fetch.</param>
     /// <param name="accept">The representation to ask for; see <see cref="SendAsync"/>.</param>
+    /// <param name="absentErrorKeys">The error keys under which the endpoint answers <c>404</c> because what it serves is not there.</param>
     /// <param name="cancellationToken">Token used to cancel the request.</param>
     /// <param name="operation">The public method being served, which names the activity; supplied by the compiler.</param>
     private async Task<string?> GetTextOrNullAsync(
         string requestUri,
         MediaTypeWithQualityHeaderValue accept,
+        FrozenSet<string> absentErrorKeys,
         CancellationToken cancellationToken,
         [CallerMemberName] string operation = "")
     {
         using var activity = StartActivity(operation);
         using var response = await SendAsync(HttpMethod.Get, requestUri, null, accept, cancellationToken).ConfigureAwait(false);
 
-        return await IsAbsentAsync(requestUri, response, cancellationToken).ConfigureAwait(false)
+        return await IsAbsentAsync(requestUri, response, absentErrorKeys, cancellationToken).ConfigureAwait(false)
             ? null
             : await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }

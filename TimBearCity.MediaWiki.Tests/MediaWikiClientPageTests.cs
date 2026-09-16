@@ -118,6 +118,19 @@ public sealed class MediaWikiClientPageTests
         Assert.Null(page);
     }
 
+    [Theory]
+    [InlineData(MediaWikiErrorKeys.NoRevision)]
+    [InlineData(MediaWikiErrorKeys.NonexistentRevision)]
+    public async Task GetPageAsync_PageWithoutContent_ReturnsNull(string errorKey)
+    {
+        // The page endpoints answer a page whose latest revision is missing or unreadable with a revision key, though the
+        // caller named no revision: the page has nothing to serve, which reads as absence.
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(errorKey);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageAsync("Broken", TestContext.Current.CancellationToken));
+    }
+
     [Fact]
     public async Task GetPageAsync_RedirectPage_ReturnsRedirectTarget()
     {
@@ -178,6 +191,15 @@ public sealed class MediaWikiClientPageTests
     }
 
     [Fact]
+    public async Task GetPageBareAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageBareAsync("<>", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetPageBareAsync_PageDoesNotExist_ReturnsNull()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
@@ -216,6 +238,15 @@ public sealed class MediaWikiClientPageTests
     }
 
     [Fact]
+    public async Task GetPageHtmlAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageHtmlAsync("<>", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task GetPageHtmlAsync_PageDoesNotExist_ReturnsNull()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NonexistentTitle);
@@ -249,6 +280,15 @@ public sealed class MediaWikiClientPageTests
         await Assert.ThrowsAsync<ArgumentException>(() => client.GetPageWithHtmlAsync(key, TestContext.Current.CancellationToken));
 
         Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
+    public async Task GetPageWithHtmlAsync_MalformedKey_ReturnsNull()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.InvalidTitle);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageWithHtmlAsync("<>", TestContext.Current.CancellationToken));
     }
 
     [Fact]

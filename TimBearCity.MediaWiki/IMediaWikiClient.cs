@@ -158,7 +158,9 @@ public interface IMediaWikiClient
     /// </exception>
     /// <exception cref="MediaWikiException">
     /// The request failed, timed out, or returned a response that could not be read. Combining <paramref name="olderThan"/> with
-    /// <paramref name="newerThan"/> is refused with <see cref="System.Net.HttpStatusCode.BadRequest"/>.
+    /// <paramref name="newerThan"/> is refused with <see cref="System.Net.HttpStatusCode.BadRequest"/>, and an
+    /// <paramref name="olderThan"/> or <paramref name="newerThan"/> that is not a revision of the page with
+    /// <see cref="System.Net.HttpStatusCode.NotFound"/>.
     /// </exception>
     /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
     Task<MediaWikiPageHistory?> GetPageHistoryAsync(
@@ -189,7 +191,8 @@ public interface IMediaWikiClient
     /// <exception cref="MediaWikiException">
     /// The request failed, timed out, or returned a response that could not be read. A range is only accepted for
     /// <see cref="MediaWikiPageHistoryCountType.Edits"/> and <see cref="MediaWikiPageHistoryCountType.Editors"/>, and only
-    /// with both ends given; anything else is refused with <see cref="System.Net.HttpStatusCode.BadRequest"/>.
+    /// with both ends given; anything else is refused with <see cref="System.Net.HttpStatusCode.BadRequest"/>. An end that
+    /// is not an existing revision is refused with <see cref="System.Net.HttpStatusCode.NotFound"/>.
     /// </exception>
     /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
     Task<MediaWikiPageHistoryCount?> GetPageHistoryCountAsync(

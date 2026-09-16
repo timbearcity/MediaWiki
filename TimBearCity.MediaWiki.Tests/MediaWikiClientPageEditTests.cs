@@ -250,7 +250,7 @@ public sealed class MediaWikiClientPageEditTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpMethod.Put, handler.Request.Method);
-        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert%20Einstein", handler.Request.RequestUri?.AbsoluteUri);
+        Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein", handler.Request.RequestUri?.AbsoluteUri);
         Assert.Equal(MediaTypeNames.Application.Json, handler.Request.Content?.Headers.ContentType?.ToString());
         Assert.Equal(
             $$"""{"source":"Hello, world.","comment":"Testing the REST API","latest":{"id":1234566},"content_model":"wikitext","token":"{{JsonEncodedText.Encode(CsrfToken)}}"}""",

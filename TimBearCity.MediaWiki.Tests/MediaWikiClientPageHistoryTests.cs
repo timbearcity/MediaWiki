@@ -54,7 +54,7 @@ public sealed class MediaWikiClientPageHistoryTests
         await new MediaWikiClient(httpClient).GetPageHistoryAsync("Solar System", olderThan, newerThan, filter, TestContext.Current.CancellationToken);
 
         Assert.Equal(
-            $"{HttpMessageHandlerStub.DefaultBaseAddress}page/Solar%20System/history{expectedQuery}",
+            $"{HttpMessageHandlerStub.DefaultBaseAddress}page/Solar_System/history{expectedQuery}",
             handler.Request.RequestUri?.AbsoluteUri);
     }
 
@@ -215,6 +215,22 @@ public sealed class MediaWikiClientPageHistoryTests
 
         Assert.Equal("fromRevisionId", exception.ParamName);
         Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
+    public async Task GetPageHistoryCountAsync_KeyWithSpaces_RequestsUnderscoredKey()
+    {
+        // The wiki redirects a title with spaces to a counts path whose {type} placeholder is left unsubstituted, which it then
+        // rejects with 400, so the client sends the stored key form outright.
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(HistoryCountJson);
+        using var httpClient = handler.CreateClient();
+
+        await new MediaWikiClient(httpClient).GetPageHistoryCountAsync("Solar System", MediaWikiPageHistoryCountType.Edits,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            $"{HttpMessageHandlerStub.DefaultBaseAddress}page/Solar_System/history/counts/edits",
+            handler.Request.RequestUri?.AbsoluteUri);
     }
 
     [Fact]

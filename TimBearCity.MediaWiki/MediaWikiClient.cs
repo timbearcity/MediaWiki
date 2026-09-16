@@ -426,11 +426,15 @@ public sealed class MediaWikiClient : IMediaWikiClient
     }
 
     /// <summary>The endpoint for one representation of a page.</summary>
-    /// <param name="key">The page key, escaped into the request path.</param>
+    /// <param name="key">
+    /// The page key or title, escaped into the request path. Spaces become underscores first: that is the form MediaWiki
+    /// stores, so the request lands directly instead of behind a <c>301</c>, and the history counts endpoint redirects
+    /// to a path with an unsubstituted <c>{type}</c> placeholder that the wiki then rejects.
+    /// </param>
     /// <param name="representation">The path segment selecting the representation, or <see langword="null"/> for the source.</param>
     private static string BuildPageUri(string key, string? representation = null)
     {
-        return $"page/{Uri.EscapeDataString(key)}{(representation is null ? null : $"/{representation}")}";
+        return $"page/{Uri.EscapeDataString(key.Replace(' ', '_'))}{(representation is null ? null : $"/{representation}")}";
     }
 
     /// <summary>The endpoint for one representation of a revision.</summary>

@@ -135,6 +135,26 @@ public sealed class MediaWikiClientReadSmokeTests(ReadableWikiFixture wiki) : IC
     }
 
     [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
+    public async Task GetPageAsync_MediaWikiNamespacePage_ReturnsPage()
+    {
+        // Wikimedia wikis answer this page with a placeholder revision (id 0, timestamp null); a wiki that has never saved it answers 404.
+        var page = await wiki.Client.GetPageAsync("MediaWiki:Common.css", TestContext.Current.CancellationToken);
+
+        Assert.SkipWhen(page is null, "The wiki has no MediaWiki:Common.css page, so there is nothing to read.");
+        Assert.Equal("MediaWiki:Common.css", page.Key);
+        Assert.NotEmpty(page.ContentModel);
+        Assert.NotEmpty(page.Source);
+        if (page.Latest.Id == 0)
+        {
+            Assert.Null(page.Latest.Timestamp);
+        }
+        else
+        {
+            Assert.NotNull(page.Latest.Timestamp);
+        }
+    }
+
+    [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
     public async Task GetPageAsync_MissingPage_ReturnsNull()
     {
         var page = await wiki.Client.GetPageAsync(BuildMissingKey(), TestContext.Current.CancellationToken);

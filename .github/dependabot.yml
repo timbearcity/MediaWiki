@@ -17,11 +17,11 @@ updates:
     # as PRs; the net10.0 group, whose major bumps are swallowed by the same rule, is bumped by hand.
     ignore:
       - dependency-name: "Microsoft.Extensions.DependencyInjection"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
       - dependency-name: "Microsoft.Extensions.Http"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
       - dependency-name: "Microsoft.Extensions.Options.ConfigurationExtensions"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
 
   - package-ecosystem: github-actions
     directory: /

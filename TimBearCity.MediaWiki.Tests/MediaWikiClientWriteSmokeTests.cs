@@ -198,23 +198,6 @@ public sealed class MediaWikiClientWriteSmokeTests(WritableWikiFixture wiki) : I
     }
 
     [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
-    public async Task UpdatePageAsync_MissingPageWithRevision_ThrowsNotFound()
-    {
-        var elsewhere = await CreateAsync(WritableWikiFixture.BuildNewTitle(), "Lends its revision.");
-
-        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => wiki.Client.UpdatePageAsync(
-            WritableWikiFixture.BuildNewTitle(),
-            "Never stored.",
-            "Updated by the write smoke tests.",
-            elsewhere.Latest.Id,
-            csrfToken: wiki.CsrfToken,
-            cancellationToken: TestContext.Current.CancellationToken));
-
-        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
-        Assert.Equal(MediaWikiErrorKeys.MissingTitle, exception.ErrorKey);
-    }
-
-    [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
     public async Task UpdatePageAsync_MissingPageWithoutRevision_CreatesPage()
     {
         var title = WritableWikiFixture.BuildNewTitle();
@@ -231,6 +214,23 @@ public sealed class MediaWikiClientWriteSmokeTests(WritableWikiFixture wiki) : I
         Assert.NotNull(history);
         var revision = Assert.Single(history.Revisions);
         Assert.Equal(created.Latest.Id, revision.Id);
+    }
+
+    [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]
+    public async Task UpdatePageAsync_MissingPageWithRevision_ThrowsNotFound()
+    {
+        var elsewhere = await CreateAsync(WritableWikiFixture.BuildNewTitle(), "Lends its revision.");
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => wiki.Client.UpdatePageAsync(
+            WritableWikiFixture.BuildNewTitle(),
+            "Never stored.",
+            "Updated by the write smoke tests.",
+            elsewhere.Latest.Id,
+            csrfToken: wiki.CsrfToken,
+            cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.MissingTitle, exception.ErrorKey);
     }
 
     [Fact(Skip = NotConfigured, SkipUnless = nameof(IsEnabled))]

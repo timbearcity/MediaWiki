@@ -32,6 +32,10 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     private readonly HttpMessageHandlerStub _htmlHandler =
         HttpMessageHandlerStub.CreateReturningContent("<!DOCTYPE html><p>Hello world</p>", MediaTypeNames.Text.Html);
 
+    private readonly HttpClientHandler _httpClientHandler = new() { AllowAutoRedirect = true };
+
+    private readonly SocketsHttpHandler _socketsHttpHandler = new() { AllowAutoRedirect = true };
+
     private readonly HttpMessageHandlerStub _wikipediaHandler = HttpMessageHandlerStub.CreateReturningJson(PagesJson);
 
     public void Dispose()
@@ -39,6 +43,8 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         _commonsHandler.Dispose();
         _forbiddenHandler.Dispose();
         _htmlHandler.Dispose();
+        _httpClientHandler.Dispose();
+        _socketsHttpHandler.Dispose();
         _wikipediaHandler.Dispose();
     }
 
@@ -223,6 +229,84 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
         Assert.Equal("secret-token", request.Headers.Authorization?.Parameter);
         Assert.Contains(request.Headers.Accept, header => header.MediaType == MediaTypeNames.Application.Json);
+    }
+
+    [Theory]
+    [InlineData(BaseUrl, "https://commons.wikimedia.org/w/rest.php/v1/page/Albert_Einstein")]
+    [InlineData(BaseUrl, "https://en.wikipedia.org:8443/w/rest.php/v1/page/Albert_Einstein")]
+    [InlineData("http://en.wikipedia.org/w/rest.php/v1/", "https://en.wikipedia.org/w/rest.php/v1/page/Albert_Einstein")]
+    public async Task AddMediaWikiClient_CrossOriginRedirect_SendsTheHopAnonymously(string baseUrl, string location)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = baseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = "secret-token";
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        // The token was meant for the wiki, so a hop off it, even to the same host on another scheme or port, goes without.
+        Assert.Equal(["secret-token", null], handler.Hops.Select(hop => hop.Token));
+        Assert.Equal(location, handler.Hops[1].Uri);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_CustomHttpClientHandler_TurnsOffItsAutoRedirect()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler(() => _httpClientHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        // The primary handler would strip the token from every redirect it followed, whoever supplied it and in whatever order.
+        Assert.Same(_httpClientHandler, GetPrimaryHandler(provider, nameof(IMediaWikiClient)));
+        Assert.False(_httpClientHandler.AllowAutoRedirect);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_CustomSocketsHttpHandler_TurnsOffItsAutoRedirect()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler(() => _socketsHttpHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        Assert.Same(_socketsHttpHandler, GetPrimaryHandler(provider, nameof(IMediaWikiClient)));
+        Assert.False(_socketsHttpHandler.AllowAutoRedirect);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_DefaultPrimaryHandler_DoesNotFollowRedirects()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        // A typed client's HttpClient is named after the type it was registered for.
+        Assert.False(GetAllowAutoRedirect(GetPrimaryHandler(provider, nameof(IMediaWikiClient))));
     }
 
     [Fact]
@@ -450,6 +534,165 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_OtherHttpClient_KeepsItsAutoRedirect()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        });
+        services.AddHttpClient("other");
+
+        await using var provider = services.BuildServiceProvider();
+
+        // The filter that turns redirects off sees every client the factory builds, and must leave the others alone.
+        Assert.True(GetAllowAutoRedirect(GetPrimaryHandler(provider, "other")));
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_RedirectLoop_StopsAfterTenHops()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, "page/Albert_Einstein", EinsteinPage.Json, true));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken));
+
+        // The request, then ten redirects, after which the last redirect is what the client gets to report.
+        Assert.Equal(11, handler.Hops.Count);
+        Assert.Equal(HttpStatusCode.Moved, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("http://en.wikipedia.org/w/rest.php/v1/page/Albert_Einstein")]
+    [InlineData("ftp://en.wikipedia.org/w/rest.php/v1/page/Albert_Einstein")]
+    public async Task AddMediaWikiClient_RedirectNotToFollow_ReportsTheRedirect(string? location)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken));
+
+        // No Location, a step-down from https to http, or a scheme HTTP cannot follow: the redirect is reported instead.
+        Assert.Single(handler.Hops);
+        Assert.Equal(HttpStatusCode.Moved, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(BaseUrl, "https://en.wikipedia.org/w/rest.php/v1/page/Albert_Einstein?redirect=no")]
+    [InlineData("http://en.wikipedia.org/w/rest.php/v1/", "http://en.wikipedia.org/w/rest.php/v1/page/Albert_Einstein?redirect=no")]
+    public async Task AddMediaWikiClient_RedirectOnTheWiki_KeepsTheAccessToken(string baseUrl, string location)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.TemporaryRedirect, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = baseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = "secret-token";
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        var page = await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        // HttpClientHandler would have sent the second hop anonymously, which a private wiki answers with 403.
+        Assert.Equal([$"{baseUrl}page/{EinsteinPage.Key}", location], handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(["secret-token", "secret-token"], handler.Hops.Select(hop => hop.Token));
+        Assert.Equal(EinsteinPage.Title, page?.Title);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_RedirectOnTheWikiWithProvider_AsksForTheTokenPerHop()
+    {
+        var tokens = new Queue<string?>(["first-token", "second-token"]);
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, "/w/rest.php/v1/page/Albert_Einstein", EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ => ValueTask.FromResult(tokens.Dequeue());
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync("Albert Einstein", TestContext.Current.CancellationToken);
+
+        // A relative Location resolves against the hop it came from, as the primary handler would resolve it.
+        Assert.Equal([$"{BaseUrl}page/Albert_Einstein", $"{BaseUrl}page/Albert_Einstein"], handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(["first-token", "second-token"], handler.Hops.Select(hop => hop.Token));
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Moved, "POST", "GET")]
+    [InlineData(HttpStatusCode.Moved, "PUT", "PUT")]
+    [InlineData(HttpStatusCode.Found, "POST", "GET")]
+    [InlineData(HttpStatusCode.SeeOther, "GET", "GET")]
+    [InlineData(HttpStatusCode.SeeOther, "PUT", "GET")]
+    [InlineData(HttpStatusCode.TemporaryRedirect, "POST", "POST")]
+    [InlineData(HttpStatusCode.PermanentRedirect, "PUT", "PUT")]
+    public async Task AddMediaWikiClient_RedirectStatus_RewritesTheMethodAsTheProtocolSays(HttpStatusCode statusCode, string method, string expectedMethod)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(statusCode, $"{BaseUrl}page/Albert_Einstein", EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+        var client = provider.GetRequiredService<IMediaWikiClient>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        switch (method)
+        {
+            case "GET":
+                await client.GetPageAsync(EinsteinPage.Key, cancellationToken);
+                break;
+            case "POST":
+                await client.CreatePageAsync(EinsteinPage.Title, EinsteinPage.Source, "Created", cancellationToken: cancellationToken);
+                break;
+            default:
+                await client.UpdatePageAsync(EinsteinPage.Key, EinsteinPage.Source, "Updated", cancellationToken: cancellationToken);
+                break;
+        }
+
+        // A 303, or a 301 or 302 to a POST, is re-sent as a GET without the body; a 307 or 308 repeats the request as it was.
+        Assert.Equal([method, expectedMethod], handler.Hops.Select(hop => hop.Method.Method));
+        Assert.Equal(expectedMethod == "GET" ? null : handler.RequestBodies[0], handler.RequestBodies[1]);
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_SectionOmitsTimeout_LeavesTimeoutAtDefault()
     {
         var configuration = BuildConfiguration(new Dictionary<string, string?>
@@ -499,5 +742,29 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)
     {
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
+
+    /// <summary>Whether the factory's default primary handler, whichever of the two a runtime uses, follows redirects itself.</summary>
+    private static bool GetAllowAutoRedirect(HttpMessageHandler primaryHandler)
+    {
+        return primaryHandler switch
+        {
+            HttpClientHandler handler => handler.AllowAutoRedirect,
+            SocketsHttpHandler handler => handler.AllowAutoRedirect,
+            _ => throw new ArgumentException($"Expected a runtime primary handler, but got {primaryHandler.GetType()}.", nameof(primaryHandler))
+        };
+    }
+
+    /// <summary>The handler at the bottom of the pipeline the factory builds for the named client.</summary>
+    private static HttpMessageHandler GetPrimaryHandler(IServiceProvider provider, string name)
+    {
+        var handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(name);
+
+        while (handler is DelegatingHandler { InnerHandler: { } innerHandler })
+        {
+            handler = innerHandler;
+        }
+
+        return handler;
     }
 }

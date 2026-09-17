@@ -141,9 +141,12 @@ The client speaks the core REST API, so it works against any MediaWiki, not only
 
 The file endpoints return protocol-relative URLs (`//host/...`) on every wiki, so combine them with the wiki's scheme before handing them to `Uri`.
 
-Point `BaseUrl` at the host `$wgServer` names. The HTML endpoints redirect to absolute URLs built from it, for a redirect page and for title normalization, and
-`HttpClient` drops the bearer token when a redirect crosses hosts. A reverse proxy or container that reaches the wiki under another name therefore answers
-`403` on a private wiki, or not at all if that name only resolves inside the network.
+Point `BaseUrl` at the host `$wgServer` names. The HTML and lint endpoints redirect to absolute URLs built from it, for a redirect page and for title
+normalization. The client follows redirects itself rather than leaving them to `HttpClientHandler`, which strips the bearer token from every redirected
+request, so a hop that stays on the wiki keeps the token. A hop to another scheme, host or port goes out anonymously, since the token was meant for the wiki:
+a reverse proxy or container that reaches the wiki under another name therefore answers `403` on a private wiki, or not at all if that name only resolves
+inside the network. To make this work, `AllowAutoRedirect` is turned off on the primary handler, including one supplied through
+`ConfigurePrimaryHttpMessageHandler`; a primary handler of another type must not follow redirects on its own.
 
 ### Pages
 

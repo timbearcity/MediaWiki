@@ -1,9 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 using TimBearCity.MediaWiki;
 
@@ -136,14 +137,23 @@ public static class ServiceCollectionExtensions
                 new MediaWikiClient(serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(httpClientName)));
         }
 
-        // Added here rather than with AddHttpMessageHandler so that a wiki without a provider gets no handler at all.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter>(new RedirectHandlerBuilderFilter()));
+
+        // Added here rather than with AddHttpMessageHandler so that a wiki without a token gets no token handler at all.
         return builder.ConfigureAdditionalHttpMessageHandlers((handlers, serviceProvider) =>
         {
             var options = serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name);
 
+            // Ahead of the token handler, so that the token is set on each hop of a redirect and not just the first request.
+            handlers.Add(new RedirectHandler());
+
             if (options.AccessTokenProvider is { } accessTokenProvider)
             {
                 handlers.Add(new AccessTokenHandler(accessTokenProvider));
+            }
+            else if (!string.IsNullOrWhiteSpace(options.AccessToken))
+            {
+                handlers.Add(new AccessTokenHandler(_ => ValueTask.FromResult<string?>(options.AccessToken)));
             }
         });
     }
@@ -255,11 +265,6 @@ public static class ServiceCollectionExtensions
             }
 
             client.DefaultRequestHeaders.UserAgent.ParseAdd(LibraryUserAgent);
-
-            if (!string.IsNullOrWhiteSpace(options.AccessToken))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
-            }
         };
     }
 

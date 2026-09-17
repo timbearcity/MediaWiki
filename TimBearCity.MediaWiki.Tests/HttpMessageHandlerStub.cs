@@ -62,6 +62,18 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
         }
     }
 
+    /// <summary>The bodies of the requests this handler received, oldest first, <see langword="null"/> for each that carried none.</summary>
+    public IReadOnlyList<string?> RequestBodies
+    {
+        get
+        {
+            lock (_requestsLock)
+            {
+                return [.. _requestBodies];
+            }
+        }
+    }
+
     /// <summary>The body of the one request this handler received, or <see langword="null"/> if it carried none.</summary>
     /// <remarks>
     /// Read as the request is sent, since the client disposes the request message, and its content with it,
@@ -77,18 +89,6 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
             return requestBodies.Count == 1
                 ? requestBodies[0]
                 : throw new InvalidOperationException($"Expected exactly one request, but the handler received {requestBodies.Count}.");
-        }
-    }
-
-    /// <summary>The bodies of the requests this handler received, oldest first, <see langword="null"/> for each that carried none.</summary>
-    public IReadOnlyList<string?> RequestBodies
-    {
-        get
-        {
-            lock (_requestsLock)
-            {
-                return [.. _requestBodies];
-            }
         }
     }
 
@@ -153,6 +153,14 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
         });
     }
 
+    /// <summary>Answers each request with whatever <paramref name="respond"/> builds for it.</summary>
+    public static HttpMessageHandlerStub CreateResponding(Func<HttpRequestMessage, HttpResponseMessage> respond)
+    {
+        ArgumentNullException.ThrowIfNull(respond);
+
+        return new HttpMessageHandlerStub((request, _) => Task.FromResult(respond(request)));
+    }
+
     /// <summary>Answers every request with <paramref name="content"/> under the given content type.</summary>
     public static HttpMessageHandlerStub CreateReturningContent(string content, string mediaType, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
@@ -181,14 +189,6 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
                      """;
 
         return CreateReturningJson(json, HttpStatusCode.NotFound);
-    }
-
-    /// <summary>Answers each request with whatever <paramref name="respond"/> builds for it.</summary>
-    public static HttpMessageHandlerStub CreateResponding(Func<HttpRequestMessage, HttpResponseMessage> respond)
-    {
-        ArgumentNullException.ThrowIfNull(respond);
-
-        return new HttpMessageHandlerStub((request, _) => Task.FromResult(respond(request)));
     }
 
     /// <summary>Answers every request with <paramref name="statusCode"/> and no message body.</summary>

@@ -18,6 +18,7 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     /// <summary>The base address used when a test does not care which wiki it is talking to.</summary>
     public const string DefaultBaseAddress = "https://wiki.example/w/rest.php/v1/";
 
+    private readonly List<Hop> _hops = [];
     private readonly List<string?> _requestBodies = [];
     private readonly List<HttpRequestMessage> _requests = [];
 #if NET9_0_OR_GREATER
@@ -30,6 +31,21 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     private HttpMessageHandlerStub(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond)
     {
         _respond = respond;
+    }
+
+    /// <summary>
+    /// Each request as it arrived, oldest first, including every hop of a redirect: <see cref="Requests"/> shows a
+    /// re-sent message only in the state its last hop left it.
+    /// </summary>
+    public IReadOnlyList<Hop> Hops
+    {
+        get
+        {
+            lock (_requestsLock)
+            {
+                return [.. _hops];
+            }
+        }
     }
 
     /// <summary>The one request this handler received.</summary>
@@ -56,16 +72,31 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     {
         get
         {
+            var requestBodies = RequestBodies;
+
+            return requestBodies.Count == 1
+                ? requestBodies[0]
+                : throw new InvalidOperationException($"Expected exactly one request, but the handler received {requestBodies.Count}.");
+        }
+    }
+
+    /// <summary>The bodies of the requests this handler received, oldest first, <see langword="null"/> for each that carried none.</summary>
+    public IReadOnlyList<string?> RequestBodies
+    {
+        get
+        {
             lock (_requestsLock)
             {
-                return _requestBodies.Count == 1
-                    ? _requestBodies[0]
-                    : throw new InvalidOperationException($"Expected exactly one request, but the handler received {_requestBodies.Count}.");
+                return [.. _requestBodies];
             }
         }
     }
 
     /// <summary>The requests this handler received, oldest first.</summary>
+    /// <remarks>
+    /// A redirect is followed by re-sending the same message, so it appears here once per hop, in the state the last
+    /// hop left it; <see cref="Hops"/> has each hop as it went out.
+    /// </remarks>
     public IReadOnlyList<HttpRequestMessage> Requests
     {
         get
@@ -85,6 +116,40 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
 
             throw new UnreachableException();
+        });
+    }
+
+    /// <summary>
+    /// Answers the first request, or every request if <paramref name="always"/>, with a redirect to
+    /// <paramref name="location"/>, and the rest with <paramref name="json"/>.
+    /// </summary>
+    /// <param name="statusCode">The redirect status, e.g. <see cref="HttpStatusCode.Moved"/>.</param>
+    /// <param name="location">The <c>Location</c> header, absolute or relative, or <see langword="null"/> to send none.</param>
+    /// <param name="json">The body answered once the redirect has been followed.</param>
+    /// <param name="always">Whether to redirect every request, which the client must refuse to follow forever.</param>
+    public static HttpMessageHandlerStub CreateRedirecting(HttpStatusCode statusCode, string? location, string json, bool always = false)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+
+        var first = true;
+
+        return CreateResponding(_ =>
+        {
+            if (!first && !always)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json) };
+            }
+
+            first = false;
+
+            var response = new HttpResponseMessage(statusCode);
+
+            if (location is not null)
+            {
+                response.Headers.Location = new Uri(location, UriKind.RelativeOrAbsolute);
+            }
+
+            return response;
         });
     }
 
@@ -160,10 +225,14 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
 
         lock (_requestsLock)
         {
+            _hops.Add(new Hop(request.Method, request.RequestUri!.AbsoluteUri, request.Headers.Authorization?.Parameter));
             _requestBodies.Add(body);
             _requests.Add(request);
         }
 
         return await _respond(request, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>One request as it went out: the method, the absolute URI and the bearer token, if any.</summary>
+    internal sealed record Hop(HttpMethod Method, string Uri, string? Token);
 }

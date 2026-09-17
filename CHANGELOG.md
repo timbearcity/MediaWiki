@@ -31,6 +31,11 @@ compares each release against the previous one, so a change to the contract cann
   `rest-pagehistorycount-too-many-revisions`, which `GetPageHistoryCountAsync` gets for a `Minor` count on a page of more than 2000 edits, and
   `rest-search-error`, which the search methods get for a query the engine rejects, such as a malformed `insource:` regular expression
   ([#9](https://github.com/timbearcity/MediaWiki/issues/9)). A retry policy keyed on `IsTransient` no longer repeats either.
+- The bearer token from `AccessToken` or `AccessTokenProvider` is no longer dropped on a redirect that stays on the wiki, such as the `307` the HTML and
+  lint endpoints answer a redirect page with, or the `301` to a normalized title ([#10](https://github.com/timbearcity/MediaWiki/issues/10)). The client
+  now follows redirects itself, above the handler that sets the token, instead of leaving them to `HttpClientHandler`, which strips `Authorization` from
+  every redirected request; `AllowAutoRedirect` is turned off on the primary handler, including one supplied through `ConfigurePrimaryHttpMessageHandler`.
+  A redirect to another scheme, host or port still goes out without the token, and a redirect from `https` to `http` is not followed.
 
 ## [0.1.0] - 2026-09-15
 

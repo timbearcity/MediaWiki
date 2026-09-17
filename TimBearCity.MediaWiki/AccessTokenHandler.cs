@@ -2,16 +2,30 @@ using System.Net.Http.Headers;
 
 namespace TimBearCity.MediaWiki;
 
-/// <summary>Sets the bearer token on each request from <see cref="MediaWikiOptions.AccessTokenProvider"/>.</summary>
+/// <summary>
+/// Sets the bearer token on each request, from <see cref="MediaWikiOptions.AccessToken"/> or
+/// <see cref="MediaWikiOptions.AccessTokenProvider"/>.
+/// </summary>
+/// <remarks>
+/// Sits inside <see cref="RedirectHandler"/>, so a redirect the wiki answers with goes out with the token as well,
+/// unless the hop leaves the wiki and the request is marked <see cref="RedirectHandler.IsAnonymous"/>.
+/// </remarks>
 internal sealed class AccessTokenHandler(Func<CancellationToken, ValueTask<string?>> accessTokenProvider) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var accessToken = await accessTokenProvider(cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrWhiteSpace(accessToken))
+        if (request.Options.TryGetValue(RedirectHandler.IsAnonymous, out _))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Authorization = null;
+        }
+        else
+        {
+            var accessToken = await accessTokenProvider(cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
         }
 
         return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);

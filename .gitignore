@@ -13,7 +13,6 @@ packages/
 .nuget/
 
 ## Rider / JetBrains
-.idea/
 *.sln.iml
 _ReSharper*/
 *.[Rr]e[Ss]harper.user

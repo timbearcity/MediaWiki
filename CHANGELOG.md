@@ -36,6 +36,10 @@ compares each release against the previous one, so a change to the contract cann
   now follows redirects itself, above the handler that sets the token, instead of leaving them to `HttpClientHandler`, which strips `Authorization` from
   every redirected request; `AllowAutoRedirect` is turned off on the primary handler, including one supplied through `ConfigurePrimaryHttpMessageHandler`.
   A redirect to another scheme, host or port still goes out without the token, and a redirect from `https` to `http` is not followed.
+- The operation's `Activity` is now marked as failed when a handler added to the pipeline throws, such as a resilience handler whose timeout, circuit
+  breaker or rate limiter rejected the request ([#11](https://github.com/timbearcity/MediaWiki/issues/11)). The exception itself still propagates as
+  thrown, since it belongs to the handler the caller registered; the README's Errors section now says so, and no longer claims that every timeout throws
+  `MediaWikiException`.
 
 ## [0.1.0] - 2026-09-15
 

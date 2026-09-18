@@ -70,6 +70,21 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageAsync_HandlerThrowsOtherException_PropagatesItUnwrapped()
+    {
+        // A resilience handler that gives up throws its own exception type; it is the caller's to catch, so it is not translated.
+        var rejection = new InvalidOperationException("The operation didn't complete within the allowed timeout.");
+        using var handler = HttpMessageHandlerStub.CreateThrowing(rejection);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Same(rejection, exception);
+    }
+
+    [Fact]
     public async Task GetPageAsync_NoReasonPhraseAndUnreadableErrorBody_ReportsStatusOnly()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningContent("<html>Gateway timeout</html>", MediaTypeNames.Text.Html, UnknownStatusCode);

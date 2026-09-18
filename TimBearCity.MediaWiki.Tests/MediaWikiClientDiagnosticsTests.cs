@@ -68,6 +68,23 @@ public sealed class MediaWikiClientDiagnosticsTests
     public static TheoryData<string> Operations => [.. OperationsByName.Keys];
 
     [Fact]
+    public async Task GetPageAsync_CallerCancels_LeavesActivityUnset()
+    {
+        using var handler = HttpMessageHandlerStub.CreateBlocking();
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+        using var recorder = new ActivityRecorder();
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetPageAsync("Title", cancellation.Token));
+
+        var activity = Assert.Single(recorder.Activities);
+        Assert.Equal(ActivityStatusCode.Unset, activity.Status);
+        Assert.Null(activity.GetTagItem("error.type"));
+    }
+
+    [Fact]
     public async Task GetPageAsync_ErrorResponse_MarksActivityFailed()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(ErrorJson, HttpStatusCode.BadRequest);
@@ -83,6 +100,24 @@ public sealed class MediaWikiClientDiagnosticsTests
         Assert.Equal(typeof(MediaWikiException).FullName, activity.GetTagItem("error.type"));
         Assert.Equal(400, activity.GetTagItem("http.response.status_code"));
         Assert.Equal(MediaWikiErrorKeys.BadRequest, activity.GetTagItem("mediawiki.error_key"));
+    }
+
+    [Fact]
+    public async Task GetPageAsync_HandlerThrowsOtherException_MarksActivityFailed()
+    {
+        var rejection = new InvalidOperationException("The operation didn't complete within the allowed timeout.");
+        using var handler = HttpMessageHandlerStub.CreateThrowing(rejection);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+        using var recorder = new ActivityRecorder();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetPageAsync("Title", TestContext.Current.CancellationToken));
+
+        var activity = Assert.Single(recorder.Activities);
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Equal(rejection.Message, activity.StatusDescription);
+        Assert.Equal(typeof(InvalidOperationException).FullName, activity.GetTagItem("error.type"));
+        Assert.Null(activity.GetTagItem("http.response.status_code"));
     }
 
     [Fact]

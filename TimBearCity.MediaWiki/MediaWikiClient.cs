@@ -698,8 +698,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
             return exception;
         }
 
-        activity.SetStatus(ActivityStatusCode.Error, exception.Message);
-        activity.SetTag(ErrorTypeTag, exception.GetType().FullName);
+        Trace(exception, activity);
 
         if (exception.StatusCode is { } statusCode)
         {
@@ -712,6 +711,22 @@ public sealed class MediaWikiClient : IMediaWikiClient
         }
 
         return exception;
+    }
+
+    /// <summary>Marks the operation's activity as failed by an exception the client did not raise itself.</summary>
+    private static void Trace(Exception exception)
+    {
+        if (CurrentActivity is { } activity)
+        {
+            Trace(exception, activity);
+        }
+    }
+
+    /// <summary>Records the status and type of <paramref name="exception"/> on <paramref name="activity"/>.</summary>
+    private static void Trace(Exception exception, Activity activity)
+    {
+        activity.SetStatus(ActivityStatusCode.Error, exception.Message);
+        activity.SetTag(ErrorTypeTag, exception.GetType().FullName);
     }
 
     /// <summary>Sends an edit and reads back the page the wiki stored.</summary>
@@ -871,6 +886,13 @@ public sealed class MediaWikiClient : IMediaWikiClient
                 $"The request to '{requestUri}' failed: {exception.Message}",
                 exception.StatusCode,
                 innerException: exception));
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // A handler the caller added to the pipeline threw, such as a resilience handler that gave up. Its
+            // exception is theirs to catch, but the operation still failed.
+            Trace(exception);
+            throw;
         }
     }
 

@@ -323,15 +323,31 @@ catch (MediaWikiException exception) when (exception.IsTransient)
 }
 ```
 
-A timeout throws `MediaWikiException`; only canceling your own `CancellationToken` throws `OperationCanceledException`. Retries and circuit breaking are left to
-the caller, so nothing is retried unless you add a resilience handler to the `IHttpClientBuilder` that `AddMediaWikiClient` returns. The standard one from
-[`Microsoft.Extensions.Http.Resilience`](https://www.nuget.org/packages/Microsoft.Extensions.Http.Resilience) retries transient failures with backoff, honors
-`Retry-After`, and opens a circuit breaker when the wiki keeps failing:
+The client's own `Timeout` throws `MediaWikiException`; only canceling your own `CancellationToken` throws `OperationCanceledException`. Retries and circuit
+breaking are left to the caller, so nothing is retried unless you add a resilience handler to the `IHttpClientBuilder` that `AddMediaWikiClient` returns. The
+standard one from [`Microsoft.Extensions.Http.Resilience`](https://www.nuget.org/packages/Microsoft.Extensions.Http.Resilience) retries transient failures
+with backoff, honors `Retry-After`, and opens a circuit breaker when the wiki keeps failing:
 
 ```csharp
 builder.Services
     .AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOptions.Position))
     .AddStandardResilienceHandler();
+```
+
+A handler you add is yours to catch. When the standard handler gives up, it throws its own exceptions rather than `MediaWikiException`:
+`TimeoutRejectedException`
+for its attempt and total timeouts, `BrokenCircuitException` while the circuit is open and `RateLimiterRejectedException` from its rate limiter. The operation's
+`Activity` is still marked as failed.
+
+```csharp
+catch (MediaWikiException exception) when (exception.IsTransient)
+{
+    logger.LogWarning(exception, "Wiki unavailable; retry after {RetryAfter}.", exception.RetryAfter);
+}
+catch (Exception exception) when (exception is TimeoutRejectedException or BrokenCircuitException)
+{
+    logger.LogWarning(exception, "Wiki unavailable; the resilience handler gave up.");
+}
 ```
 
 ## Diagnostics

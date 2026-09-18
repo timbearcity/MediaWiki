@@ -5,8 +5,10 @@
 #   check-commit-message.sh <file>          the message in a file, as Git hands it to a commit-msg hook
 #   check-commit-message.sh --range <a>..<b> every commit in the range, as CI checks a push or a pull request
 #
-# Merge commits, reverts and the fixup!/squash! commits of an interactive rebase are accepted as Git writes them.
+# Merge commits, reverts and the fixup!/squash! commits of an interactive rebase are accepted as Git writes them,
+# and the " (#N)" that GitHub appends to a squash-merged pull request's title does not count towards the header length.
 set -euo pipefail
+shopt -s extglob
 
 types='feat|fix|docs|test|refactor|style|build|ci|chore'
 header_pattern="^(${types})(\([a-z0-9._-]+\))?!?: [^ ].*[^. ]$"
@@ -35,8 +37,9 @@ check_message() {
         if ! [[ "$header" =~ $header_pattern ]]; then
             problems+=("the header does not match '<type>(<scope>)!: <subject>' with a type of ${types//|/, }, a non-empty subject and no trailing period")
         fi
-        if [ "${#header}" -gt "$max_header_length" ]; then
-            problems+=("the header is ${#header} characters; the limit is ${max_header_length}")
+        local measured="${header%% (#+([0-9]))}"
+        if [ "${#measured}" -gt "$max_header_length" ]; then
+            problems+=("the header is ${#measured} characters; the limit is ${max_header_length}")
         fi
     fi
     if [ "${#kept[@]}" -gt 1 ] && [ -n "${kept[1]}" ]; then

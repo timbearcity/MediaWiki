@@ -31,7 +31,8 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 - `scope` is optional and names the part touched, for example `client`, `options`, `di`, `tests` or `smoke`.
 - `!` marks a breaking change and comes with a `BREAKING CHANGE:` footer saying what breaks and how to migrate. Until 1.0.0 a minor version may break, so
   the marker is what makes those changes findable.
-- `subject` is imperative and lowercase (`add`, not `Added` or `Adds`), has no trailing period, and keeps the whole header within 72 characters.
+- `subject` is imperative and lowercase (`add`, not `Added` or `Adds`), has no trailing period, and keeps the whole header within 72 characters. The
+  ` (#N)` that GitHub appends when a pull request is squash-merged does not count.
 - The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72 characters.
 - Footers are optional: `BREAKING CHANGE: ...`, `Fixes #12`, `Co-Authored-By: ...`.
 

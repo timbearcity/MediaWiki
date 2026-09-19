@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 
@@ -165,6 +166,25 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     public static HttpMessageHandlerStub CreateReturningContent(string content, string mediaType, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         return CreateResponding(_ => new HttpResponseMessage(statusCode) { Content = new StringContent(content, Encoding.UTF8, mediaType) });
+    }
+
+    /// <summary>
+    /// Answers every request with <paramref name="content"/> under the given content type and a <c>charset</c> the runtime
+    /// has no encoding for, as an error page served by a proxy may be.
+    /// </summary>
+    public static HttpMessageHandlerStub CreateReturningContentInUnsupportedCharset(
+        string content,
+        string mediaType,
+        HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        return CreateResponding(_ =>
+        {
+            // StringContent validates the charset, so the bytes go out raw under a header it would refuse.
+            var body = new ByteArrayContent(Encoding.Latin1.GetBytes(content));
+            body.Headers.ContentType = new MediaTypeHeaderValue(mediaType) { CharSet = "windows-1252" };
+
+            return new HttpResponseMessage(statusCode) { Content = body };
+        });
     }
 
     /// <summary>Answers every request with <paramref name="json"/>.</summary>

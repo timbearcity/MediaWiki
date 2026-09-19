@@ -40,6 +40,10 @@ compares each release against the previous one, so a change to the contract cann
   breaker or rate limiter rejected the request ([#11](https://github.com/timbearcity/MediaWiki/issues/11)). The exception itself still propagates as
   thrown, since it belongs to the handler the caller registered; the README's Errors section now says so, and no longer claims that every timeout throws
   `MediaWikiException`.
+- A response whose `Content-Type` names a charset the runtime has no encoding for, such as an error page served as `windows-1252`, now throws
+  `MediaWikiException` instead of `InvalidOperationException` ([#12](https://github.com/timbearcity/MediaWiki/issues/12)). A `404` in such a charset
+  gets the same "check the base URL" hint as any other non-MediaWiki `404`. A success body the client cannot decode reports the request it came from
+  and the status; the JSON, HTML and transform endpoints all do so.
 
 ## [0.1.0] - 2026-09-15
 

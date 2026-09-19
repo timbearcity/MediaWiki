@@ -1,0 +1,84 @@
+name: Docs
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - docs/**
+      - TimBearCity.MediaWiki/**
+      - README.md
+      - CHANGELOG.md
+      - CONTRIBUTING.md
+      - .config/dotnet-tools.json
+      - .github/workflows/docs.yml
+  pull_request:
+    branches: [ main ]
+    paths:
+      - docs/**
+      - TimBearCity.MediaWiki/**
+      - README.md
+      - CHANGELOG.md
+      - CONTRIBUTING.md
+      - .config/dotnet-tools.json
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+# One deployment at a time, and a running one is left to finish so Pages never serves a half-written site.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          # The API metadata is read from the newest target only; docfx.json pins it.
+          dotnet-version: 10.0.x
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Build the site
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
+
+      - name: Upload the site
+        # A pull request only proves the site builds; the artifact is for the `deploy` job.
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs/_site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      # Pages deployments authenticate with the job's OIDC token, so no key is stored anywhere.
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

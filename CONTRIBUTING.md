@@ -15,6 +15,19 @@ with a reminder of the format. Rider runs Git hooks, so the check applies to com
 In Rider, under Settings > Version Control > Commit, enable the "Blank line between subject and body", "Limit subject line" (72) and "Limit body line"
 (72) inspections; they flag in the editor what the hook rejects afterwards. Rider reads `commit.template` too, so the reminder appears in the commit field.
 
+## Documentation
+
+The site at [timbearcity.github.io/MediaWiki](https://timbearcity.github.io/MediaWiki/) is the README, `CHANGELOG.md` and this file as pages, plus an API
+reference generated from the XML documentation comments. `docs/docfx.json` configures [docfx](https://dotnet.github.io/docfx/), which is pinned in
+`.config/dotnet-tools.json`. To preview a change locally:
+
+```
+dotnet tool restore
+dotnet docfx docs/docfx.json --serve
+```
+
+The Docs workflow builds the site on every pull request that touches it, with warnings as errors, and publishes it to GitHub Pages on `main`.
+
 ## Commit messages
 
 Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):
@@ -41,7 +54,7 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 | `feat`          | New public API or behaviour                                           | Added              |
 | `fix`           | A bug fix                                                             | Fixed              |
 | `feat!`, `fix!` | A breaking change                                                     | Changed or Removed |
-| `docs`          | README, XML docs, `CHANGELOG.md`, this file                           |                    |
+| `docs`          | README, XML docs, `CHANGELOG.md`, this file, the site in `docs/`      |                    |
 | `test`          | Unit and smoke tests                                                  |                    |
 | `refactor`      | A change that neither fixes a bug nor adds behaviour                  |                    |
 | `style`         | Formatting only; prefer squashing it into the change that needed it   |                    |

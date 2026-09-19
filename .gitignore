@@ -27,6 +27,11 @@ _ReSharper*/
 *.userosscache
 *.sln.docstates
 
+## Docs: docfx writes the API metadata and the site next to its config
+docs/api/*
+!docs/api/index.md
+docs/_site/
+
 ## Test / coverage
 [Tt]est[Rr]esult*/
 coverage*.json

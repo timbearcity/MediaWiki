@@ -1,0 +1,8 @@
+- name: Guide
+  href: ../README.md
+- name: API
+  href: api/
+- name: Changelog
+  href: ../CHANGELOG.md
+- name: Contributing
+  href: ../CONTRIBUTING.md

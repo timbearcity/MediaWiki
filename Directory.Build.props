@@ -36,7 +36,7 @@
         <Company>Tim Tissari Bjornstedt</Company>
         <Copyright>Copyright (c) Tim Tissari Bjornstedt</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/timbearcity/MediaWiki</PackageProjectUrl>
+        <PackageProjectUrl>https://timbearcity.github.io/MediaWiki/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/timbearcity/MediaWiki</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>

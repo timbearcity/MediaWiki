@@ -3,9 +3,10 @@
 [![CI](https://github.com/timbearcity/MediaWiki/actions/workflows/ci.yml/badge.svg)](https://github.com/timbearcity/MediaWiki/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/TimBearCity.MediaWiki.svg)](https://www.nuget.org/packages/TimBearCity.MediaWiki)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/timbearcity/MediaWiki/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-API%20reference-blue)](https://timbearcity.github.io/MediaWiki/)
 
 An unofficial .NET client for the [MediaWiki REST API](https://www.mediawiki.org/wiki/API:REST_API) (`/w/rest.php/v1/`), covering every documented endpoint of
-the core API.
+the core API. This file is the guide; the [API reference](https://timbearcity.github.io/MediaWiki/api/) lists every public type and member.
 
 ## Install
 

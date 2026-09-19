@@ -11,6 +11,9 @@
         <File Path="README.md" />
         <File Path="SECURITY.md" />
     </Folder>
+    <Folder Name="/Solution Items/.config/">
+        <File Path=".config/dotnet-tools.json" />
+    </Folder>
     <Folder Name="/Solution Items/.github/">
         <File Path=".github/dependabot.yml" />
     </Folder>
@@ -20,7 +23,16 @@
     </Folder>
     <Folder Name="/Solution Items/.github/workflows/">
         <File Path=".github/workflows/ci.yml" />
+        <File Path=".github/workflows/docs.yml" />
         <File Path=".github/workflows/release.yml" />
+    </Folder>
+    <Folder Name="/Solution Items/docs/">
+        <File Path="docs/docfx.json" />
+        <File Path="docs/index.md" />
+        <File Path="docs/toc.yml" />
+    </Folder>
+    <Folder Name="/Solution Items/docs/api/">
+        <File Path="docs/api/index.md" />
     </Folder>
     <Project Path="TimBearCity.MediaWiki/TimBearCity.MediaWiki.csproj" />
     <Project Path="TimBearCity.MediaWiki.Tests/TimBearCity.MediaWiki.Tests.csproj" />

@@ -381,6 +381,8 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     [Theory]
     [InlineData("", UserAgent, 30, null)]
     [InlineData("not-a-url", UserAgent, 30, null)]
+    [InlineData("localhost:8080/w/rest.php/v1/", UserAgent, 30, null)]
+    [InlineData("ftp://en.wikipedia.org/w/rest.php/v1/", UserAgent, 30, null)]
     [InlineData(BaseUrl, "", 30, null)]
     [InlineData(BaseUrl, "   ", 30, null)]
     [InlineData(BaseUrl, UserAgent, 0, null)]

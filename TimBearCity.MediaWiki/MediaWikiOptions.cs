@@ -20,7 +20,8 @@ public sealed class MediaWikiOptions
     public Func<CancellationToken, ValueTask<string?>>? AccessTokenProvider { get; set; }
 
     /// <summary>
-    /// Base URL of the MediaWiki REST endpoint (e.g., "https://en.wikipedia.org/w/rest.php/v1/").
+    /// Base URL of the MediaWiki REST endpoint (e.g., "https://en.wikipedia.org/w/rest.php/v1/"). Must be absolute, with an
+    /// http or https scheme.
     /// </summary>
     public string BaseUrl { get; set; } = string.Empty;
 

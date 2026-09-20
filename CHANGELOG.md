@@ -44,6 +44,9 @@ compares each release against the previous one, so a change to the contract cann
   `MediaWikiException` instead of `InvalidOperationException` ([#12](https://github.com/timbearcity/MediaWiki/issues/12)). A `404` in such a charset
   gets the same "check the base URL" hint as any other non-MediaWiki `404`. A success body the client cannot decode reports the request it came from
   and the status; the JSON, HTML and transform endpoints all do so.
+- A `BaseUrl` without a scheme, such as `localhost:8080/w/rest.php/v1/`, now fails validation at startup instead of passing it and making every call
+  throw `NotSupportedException` ([#24](https://github.com/timbearcity/MediaWiki/issues/24)). `Uri` reads the host of such a value as its scheme, so the
+  validator now also requires the scheme to be `http` or `https`; a value with another scheme, such as `ftp://`, is rejected the same way.
 
 ## [0.1.0] - 2026-09-15
 

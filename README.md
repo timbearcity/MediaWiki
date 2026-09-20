@@ -48,7 +48,7 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 
 | Option                | Default    | Notes                                                                                                                                   |
 |-----------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `BaseUrl`             | none       | Required. Absolute URL of the REST endpoint.                                                                                            |
+| `BaseUrl`             | none       | Required. Absolute `http` or `https` URL of the REST endpoint.                                                                          |
 | `UserAgent`           | none       | Required. Sent ahead of this library's own token.                                                                                       |
 | `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`.                                                                                                 |
 | `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates. |

@@ -104,8 +104,8 @@ public static class ServiceCollectionExtensions
 
         optionsBuilder
             .Validate(
-                options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _),
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} must be an absolute URL, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".")
+                options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
+                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} must be an absolute http or https URL, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".")
             .Validate(
                 options => options.Timeout > TimeSpan.Zero,
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero.")

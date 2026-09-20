@@ -11,6 +11,8 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-20
+
 ### Changed
 
 - `MediaWikiRevisionReference.Timestamp` is now `DateTimeOffset?`. Pages in the `MediaWiki:` namespace come back from Wikimedia wikis with a placeholder
@@ -79,5 +81,6 @@ compares each release against the previous one, so a change to the contract cann
 - Native AOT and trimming support through a System.Text.Json source generator context.
 - Targets `net8.0` and `net10.0`.
 
-[Unreleased]: https://github.com/timbearcity/MediaWiki/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/timbearcity/MediaWiki/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/timbearcity/MediaWiki/releases/tag/v0.2.0
 [0.1.0]: https://github.com/timbearcity/MediaWiki/releases/tag/v0.1.0

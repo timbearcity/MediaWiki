@@ -1,7 +1,1 @@
 #nullable enable
-*REMOVED*TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Deconstruct(out long Id, out System.DateTimeOffset Timestamp) -> void
-*REMOVED*TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.MediaWikiRevisionReference(long Id, System.DateTimeOffset Timestamp) -> void
-*REMOVED*TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Timestamp.get -> System.DateTimeOffset
-TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Deconstruct(out long Id, out System.DateTimeOffset? Timestamp) -> void
-TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.MediaWikiRevisionReference(long Id, System.DateTimeOffset? Timestamp) -> void
-TimBearCity.MediaWiki.Pages.MediaWikiRevisionReference.Timestamp.get -> System.DateTimeOffset?

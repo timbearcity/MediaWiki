@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <Description>A .NET client for the MediaWiki REST API (/w/rest.php/v1/), covering every endpoint of the core API.</Description>
+        <Description>An unofficial .NET client for the MediaWiki REST API (/w/rest.php/v1/), covering every documented endpoint of the core API.</Description>
         <PackageTags>mediawiki;wikimedia;wikipedia;wiki;wikitext;rest;api;client</PackageTags>
     </PropertyGroup>
 

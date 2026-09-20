@@ -653,14 +653,20 @@ public sealed class MediaWikiClient : IMediaWikiClient
             return await response.Content.ReadFromJsonAsync(MediaWikiErrorJsonSerializerContext.Default.MediaWikiError, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is JsonException or NotSupportedException or HttpRequestException or IOException)
+        catch (Exception exception) when (exception is JsonException or NotSupportedException or InvalidOperationException)
         {
-            // A wiki behind a proxy may answer with HTML, or with nothing; the status code still carries the failure.
+            // A wiki behind a proxy may answer with HTML, with nothing, or under a charset the runtime has no encoding for,
+            // which HttpContent reports as InvalidOperationException; the status code still carries the failure.
             return null;
         }
     }
 
     /// <summary>Reads the response body, translating malformed or empty payloads into <see cref="MediaWikiException"/>.</summary>
+    /// <remarks>
+    /// <see cref="SendAsync"/> has already buffered the body, so a truncated response surfaces there; what remains here is a
+    /// body that is not JSON, not the promised media type, or under a <c>charset</c> the runtime has no encoding for, which
+    /// <see cref="HttpContent"/> reports as <see cref="InvalidOperationException"/>.
+    /// </remarks>
     private static async Task<T> ReadJsonAsync<T>(
         string requestUri,
         HttpResponseMessage response,
@@ -673,7 +679,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
         {
             value = await response.Content.ReadFromJsonAsync(typeInfo, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is JsonException or NotSupportedException or HttpRequestException or IOException)
+        catch (Exception exception) when (exception is JsonException or NotSupportedException or InvalidOperationException)
         {
             throw Trace(new MediaWikiException(
                 $"The response to '{requestUri}' could not be read as {typeof(T).Name}: {exception.Message}",
@@ -684,6 +690,23 @@ public sealed class MediaWikiClient : IMediaWikiClient
         return value ?? throw Trace(new MediaWikiException(
             $"The response to '{requestUri}' was empty; expected {typeof(T).Name}.",
             response.StatusCode));
+    }
+
+    /// <summary>Reads the response body as text, translating an unreadable payload into <see cref="MediaWikiException"/>.</summary>
+    /// <remarks>The body is buffered already, as for <see cref="ReadJsonAsync{T}"/>; only an unsupported <c>charset</c> can fail here.</remarks>
+    private static async Task<string> ReadTextAsync(string requestUri, HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw Trace(new MediaWikiException(
+                $"The response to '{requestUri}' could not be read as text: {exception.Message}",
+                response.StatusCode,
+                innerException: exception));
+        }
     }
 
     /// <summary>Marks the operation's activity as failed by <paramref name="exception"/>, and hands it back to be thrown.</summary>
@@ -819,7 +842,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         return await IsAbsentAsync(requestUri, response, absentErrorKeys, cancellationToken).ConfigureAwait(false)
             ? null
-            : await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            : await ReadTextAsync(requestUri, response, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Runs one of the two search endpoints, which take the same arguments and answer in the same shape.</summary>
@@ -957,6 +980,6 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         await EnsureSuccessAsync(requestUri, response, cancellationToken).ConfigureAwait(false);
 
-        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        return await ReadTextAsync(requestUri, response, cancellationToken).ConfigureAwait(false);
     }
 }

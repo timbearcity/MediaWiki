@@ -97,6 +97,24 @@ public sealed class MediaWikiClientErrorHandlingTests
         Assert.EndsWith("failed with status 599.", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GetPageAsync_NotFoundInUnsupportedCharset_ThrowsMediaWikiException()
+    {
+        // The same misdirected request, but the error page names a code page .NET has no encoding for without a provider.
+        using var handler = HttpMessageHandlerStub.CreateReturningContentInUnsupportedCharset(
+            "<html><body><h1>Not Found</h1></body></html>",
+            MediaTypeNames.Text.Html,
+            HttpStatusCode.NotFound);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        Assert.Null(exception.ErrorKey);
+        Assert.Contains("check the base URL", exception.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("<html><body><h1>Not Found</h1></body></html>")]
@@ -242,6 +260,20 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageAsync_SuccessInUnsupportedCharset_ThrowsMediaWikiException()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningContentInUnsupportedCharset("{}", MediaTypeNames.Application.Json);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Contains("could not be read as MediaWikiPage", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetPageAsync_Timeout_ThrowsMediaWikiException()
     {
         using var handler = HttpMessageHandlerStub.CreateBlocking();
@@ -329,6 +361,20 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageHtmlAsync_SuccessInUnsupportedCharset_ThrowsMediaWikiException()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningContentInUnsupportedCharset("<p>x</p>", MediaTypeNames.Text.Html);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHtmlAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Contains("could not be read as text", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task SearchPagesAsync_SearchError_ReportsNotTransient()
     {
         const string errorJson = $$"""
@@ -362,5 +408,20 @@ public sealed class MediaWikiClientErrorHandlingTests
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
         Assert.True(exception.IsTransient);
+    }
+
+    [Fact]
+    public async Task TransformWikitextToHtmlAsync_SuccessInUnsupportedCharset_ThrowsMediaWikiException()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningContentInUnsupportedCharset("<p>x</p>", MediaTypeNames.Text.Html);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() =>
+            client.TransformWikitextToHtmlAsync("x", cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Contains("could not be read as text", exception.Message, StringComparison.Ordinal);
     }
 }

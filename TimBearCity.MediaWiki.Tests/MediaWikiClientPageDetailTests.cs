@@ -29,7 +29,7 @@ public sealed class MediaWikiClientPageDetailTests
         {
           "files": [
             {
-              "title": "File:Einstein 1921.jpg",
+              "title": "Einstein 1921.jpg",
               "file_description_url": "//commons.wikimedia.org/wiki/File:Einstein_1921.jpg",
               "latest": {
                 "timestamp": "2022-08-28T12:18:48Z",
@@ -53,7 +53,7 @@ public sealed class MediaWikiClientPageDetailTests
               }
             },
             {
-              "title": "File:Einstein voice.ogg",
+              "title": "Einstein voice.ogg",
               "file_description_url": "//commons.wikimedia.org/wiki/File:Einstein_voice.ogg",
               "latest": null,
               "preferred": null,
@@ -115,7 +115,7 @@ public sealed class MediaWikiClientPageDetailTests
         Assert.NotNull(files);
         Assert.Equal(2, files.Count);
 
-        Assert.Equal("File:Einstein 1921.jpg", files[0].Title);
+        Assert.Equal("Einstein 1921.jpg", files[0].Title);
         Assert.Equal("Archivist", files[0].Latest?.User?.Name);
         Assert.Equal("BITMAP", files[0].Preferred?.MediaType);
         Assert.Equal(800, files[0].Preferred?.Width);

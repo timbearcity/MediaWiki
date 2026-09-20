@@ -8,7 +8,7 @@ public sealed class MediaWikiClientFileTests
     private const string FileJson =
         """
         {
-          "title": "File:Fennec Fox.jpg",
+          "title": "Fennec Fox.jpg",
           "file_description_url": "//commons.wikimedia.org/wiki/File:Fennec_Fox.jpg",
           "latest": {
             "timestamp": "2022-08-28T12:18:48Z",
@@ -44,7 +44,7 @@ public sealed class MediaWikiClientFileTests
     private const string ThumbnailsJson =
         """
         {
-          "title": "File:Fennec Fox.jpg",
+          "title": "Fennec Fox.jpg",
           "original": {
             "mediatype": "BITMAP",
             "width": 1200,
@@ -144,7 +144,7 @@ public sealed class MediaWikiClientFileTests
         Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}file/File%3AFennec%20Fox.jpg", handler.Request.RequestUri?.AbsoluteUri);
 
         Assert.NotNull(file);
-        Assert.Equal("File:Fennec Fox.jpg", file.Title);
+        Assert.Equal("Fennec Fox.jpg", file.Title);
         Assert.Equal("//commons.wikimedia.org/wiki/File:Fennec_Fox.jpg", file.FileDescriptionUrl);
         Assert.Equal(234501, file.Latest?.User?.Id);
         Assert.Equal(800, file.Preferred?.Width);
@@ -252,7 +252,7 @@ public sealed class MediaWikiClientFileTests
         Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}file/File%3AFennec%20Fox.jpg/thumbnails", handler.Request.RequestUri?.AbsoluteUri);
 
         Assert.NotNull(thumbnails);
-        Assert.Equal("File:Fennec Fox.jpg", thumbnails.Title);
+        Assert.Equal("Fennec Fox.jpg", thumbnails.Title);
         Assert.Equal(1200, thumbnails.Original.Width);
         Assert.Equal("BITMAP", thumbnails.Original.MediaType);
 

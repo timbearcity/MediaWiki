@@ -52,6 +52,10 @@ compares each release against the previous one, so a change to the contract cann
   `d.hh:mm:ss` format a configuration value is read in, since `"30"` binds as 30 days rather than 30 seconds.
 - `Timeout` now accepts `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration), which `HttpClient` allows, so a resilience handler can own
   the timeout without the client's own one expiring first. `TimeSpan.Zero` and every other negative value are still rejected.
+- A page key or file title of `.` or `..` now throws `ArgumentException`, like an empty one, instead of going out as a path segment that the URI
+  resolver collapses ([#26](https://github.com/timbearcity/MediaWiki/issues/26)). `GetPageBareAsync(".")` used to request `page/bare` and return that
+  page, and `GetFileAsync("..")` used to request the API root. Every method that puts a `key` or `title` in the path checks it; a key that merely
+  contains dots is unaffected.
 
 ## [0.1.0] - 2026-09-15
 

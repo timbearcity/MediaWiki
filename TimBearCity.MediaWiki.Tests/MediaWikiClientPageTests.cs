@@ -64,10 +64,27 @@ public sealed class MediaWikiClientPageTests
     }
 
     [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task GetPageAsync_DotSegmentKey_ThrowsArgumentException(string key)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(EinsteinPage.Json);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => client.GetPageAsync(key, TestContext.Current.CancellationToken));
+
+        Assert.Equal("key", exception.ParamName);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
     // A title with spaces goes out as the key the wiki stores, so the request lands without a redirect.
     [InlineData("Albert Einstein", "Albert_Einstein")]
     // Each character outside ASCII goes out as its percent-encoded UTF-8 bytes.
     [InlineData("太陽系", "%E5%A4%AA%E9%99%BD%E7%B3%BB")]
+    // Only a whole segment of "." or ".." is a dot segment; a key that merely starts with dots is sent as it is.
+    [InlineData(".. .", ".._.")]
     public async Task GetPageAsync_KeyNeedingEscaping_RequestsEscapedPageEndpoint(string key, string expectedSegment)
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(EinsteinPage.Json);
@@ -187,6 +204,21 @@ public sealed class MediaWikiClientPageTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => client.GetPageBareAsync(key, TestContext.Current.CancellationToken));
 
+        Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task GetPageBareAsync_DotSegmentKey_ThrowsArgumentException(string key)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(EinsteinPage.BareJson);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => client.GetPageBareAsync(key, TestContext.Current.CancellationToken));
+
+        Assert.Equal("key", exception.ParamName);
         Assert.Empty(handler.Requests);
     }
 

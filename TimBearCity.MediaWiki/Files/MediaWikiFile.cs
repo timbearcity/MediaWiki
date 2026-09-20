@@ -8,7 +8,7 @@ namespace TimBearCity.MediaWiki.Files;
 /// The renditions are nullable throughout: a wiki that cannot render a derivative, or a media type it has no
 /// preferred form for, reports the absence rather than an error.
 /// </remarks>
-/// <param name="Title">The file's title, including its namespace, e.g. "File:Fennec Fox.jpg".</param>
+/// <param name="Title">The file's title without the <c>File:</c> namespace, e.g. "Fennec Fox.jpg".</param>
 /// <param name="FileDescriptionUrl">The URL of the page describing the file, which may be protocol-relative.</param>
 /// <param name="Latest">The most recent upload, if the wiki reports one.</param>
 /// <param name="Preferred">The rendition the wiki would rather serve than the original, if it has one.</param>

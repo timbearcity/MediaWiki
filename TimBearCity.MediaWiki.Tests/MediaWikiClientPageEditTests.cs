@@ -134,6 +134,22 @@ public sealed class MediaWikiClientPageEditTests
         Assert.Empty(handler.Requests);
     }
 
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task UpdatePageAsync_DotSegmentKey_ThrowsArgumentException(string key)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(EinsteinPage.Json);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.UpdatePageAsync(key, "Hello, world.", "Testing the REST API", cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal("key", exception.ParamName);
+        Assert.Empty(handler.Requests);
+    }
+
     [Fact]
     public async Task UpdatePageAsync_EditConflict_ThrowsMediaWikiException()
     {

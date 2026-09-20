@@ -72,6 +72,22 @@ public sealed class MediaWikiClientTransformTests
         Assert.Empty(handler.Requests);
     }
 
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task TransformWikitextToHtmlAsync_DotSegmentTitle_ThrowsArgumentException(string title)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningContent("<h2>Hello world</h2>", MediaTypeNames.Text.Html);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.TransformWikitextToHtmlAsync("== Hello world ==", title, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal("title", exception.ParamName);
+        Assert.Empty(handler.Requests);
+    }
+
     [Fact]
     public async Task TransformWikitextToHtmlAsync_NullWikitext_ThrowsArgumentNullException()
     {

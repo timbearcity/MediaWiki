@@ -83,6 +83,21 @@ public sealed class MediaWikiClientFileTests
         Assert.Empty(handler.Requests);
     }
 
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task GetFileAsync_DotSegmentTitle_ThrowsArgumentException(string title)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(FileJson);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => client.GetFileAsync(title, TestContext.Current.CancellationToken));
+
+        Assert.Equal("title", exception.ParamName);
+        Assert.Empty(handler.Requests);
+    }
+
     [Fact]
     public async Task GetFileAsync_FileDoesNotExist_ReturnsNull()
     {
@@ -149,6 +164,21 @@ public sealed class MediaWikiClientFileTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => client.GetFileThumbnailsAsync(title, TestContext.Current.CancellationToken));
 
+        Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task GetFileThumbnailsAsync_DotSegmentTitle_ThrowsArgumentException(string title)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(ThumbnailsJson);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => client.GetFileThumbnailsAsync(title, TestContext.Current.CancellationToken));
+
+        Assert.Equal("title", exception.ParamName);
         Assert.Empty(handler.Requests);
     }
 

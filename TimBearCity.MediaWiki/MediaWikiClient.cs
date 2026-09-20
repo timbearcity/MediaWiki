@@ -171,7 +171,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
-        var requestUri = $"file/{Uri.EscapeDataString(title)}";
+        var requestUri = $"file/{EscapePathSegment(title, nameof(title))}";
 
         return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFile, AbsentFileErrorKeys, cancellationToken);
     }
@@ -181,7 +181,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
-        var requestUri = $"file/{Uri.EscapeDataString(title)}/thumbnails";
+        var requestUri = $"file/{EscapePathSegment(title, nameof(title))}/thumbnails";
 
         return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiFileThumbnails, AbsentFileErrorKeys, cancellationToken,
             "rest-file-not-thumbnailable");
@@ -471,7 +471,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// <param name="representation">The path segment selecting the representation, or <see langword="null"/> for the source.</param>
     private static string BuildPageUri(string key, string? representation = null)
     {
-        return $"page/{Uri.EscapeDataString(key.Replace(' ', '_'))}{(representation is null ? null : $"/{representation}")}";
+        return $"page/{EscapePathSegment(key.Replace(' ', '_'), nameof(key))}{(representation is null ? null : $"/{representation}")}";
     }
 
     /// <summary>The endpoint for one representation of a revision.</summary>
@@ -502,7 +502,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
-        var requestUri = $"transform/{conversion}/{Uri.EscapeDataString(title)}";
+        var requestUri = $"transform/{conversion}/{EscapePathSegment(title, nameof(title))}";
 
         if (revisionId is not { } revision)
         {
@@ -539,6 +539,20 @@ public sealed class MediaWikiClient : IMediaWikiClient
         var error = await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false);
 
         throw CreateException(requestUri, response, error);
+    }
+
+    /// <summary>Escapes a page key or file title into one segment of the request path.</summary>
+    /// <param name="value">
+    /// The key or title. A whole segment of <c>.</c> or <c>..</c> is rejected: escaping leaves dots alone, and resolving
+    /// the path against the base address would collapse the segment so that the request lands on another endpoint
+    /// (<c>page/../bare</c> becomes <c>v1/bare</c>) instead of answering for the page.
+    /// </param>
+    /// <param name="paramName">The name of the caller's parameter, for the <see cref="ArgumentException"/>.</param>
+    private static string EscapePathSegment(string value, string paramName)
+    {
+        return value is "." or ".."
+            ? throw new ArgumentException($"\"{value}\" is not a valid key or title: it would be resolved as a path segment.", paramName)
+            : Uri.EscapeDataString(value);
     }
 
     /// <summary>

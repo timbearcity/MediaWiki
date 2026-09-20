@@ -110,8 +110,8 @@ public static class ServiceCollectionExtensions
                 options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} must be an absolute http or https URL, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".")
             .Validate(
-                options => options.Timeout > TimeSpan.Zero && options.Timeout <= MaxTimeout,
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero and at most {MaxTimeout}. A configuration value is read as d.hh:mm:ss, so \"30\" is 30 days; write 30 seconds as \"00:00:30\".")
+                options => (options.Timeout > TimeSpan.Zero && options.Timeout <= MaxTimeout) || options.Timeout == Timeout.InfiniteTimeSpan,
+                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero and at most {MaxTimeout}, or Timeout.InfiniteTimeSpan. A configuration value is read as d.hh:mm:ss, so \"30\" is 30 days; write 30 seconds as \"00:00:30\".")
             .Validate(
                 options => options.MaxResponseSize is null or > 0,
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.MaxResponseSize)}{Describe(name)} must be greater than zero.")

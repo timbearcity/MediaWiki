@@ -50,6 +50,8 @@ compares each release against the previous one, so a change to the contract cann
 - A `Timeout` above what `HttpClient` accepts (24.20:31:23.647) now fails validation at startup instead of passing it and making the client throw
   `ArgumentOutOfRangeException` when resolved ([#25](https://github.com/timbearcity/MediaWiki/issues/25)). The message names the bound and the
   `d.hh:mm:ss` format a configuration value is read in, since `"30"` binds as 30 days rather than 30 seconds.
+- `Timeout` now accepts `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration), which `HttpClient` allows, so a resilience handler can own
+  the timeout without the client's own one expiring first. `TimeSpan.Zero` and every other negative value are still rejected.
 
 ## [0.1.0] - 2026-09-15
 

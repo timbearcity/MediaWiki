@@ -378,6 +378,25 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(MediaTypeNames.Text.Html, Assert.Single(_htmlHandler.Request.Headers.Accept).MediaType);
     }
 
+    [Fact]
+    public async Task AddMediaWikiClient_InfiniteTimeout_AppliesItToHttpClient()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.Timeout = Timeout.InfiniteTimeSpan;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        using var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(IMediaWikiClient));
+
+        Assert.Equal(Timeout.InfiniteTimeSpan, httpClient.Timeout);
+    }
+
     [Theory]
     [InlineData("", UserAgent, 30, null)]
     [InlineData("not-a-url", UserAgent, 30, null)]
@@ -387,13 +406,14 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     [InlineData(BaseUrl, "   ", 30, null)]
     [InlineData(BaseUrl, UserAgent, 0, null)]
     [InlineData(BaseUrl, UserAgent, -1, null)]
+    [InlineData(BaseUrl, UserAgent, -0.002, null)]
     [InlineData(BaseUrl, UserAgent, int.MaxValue / 1000 + 1, null)]
     [InlineData(BaseUrl, UserAgent, 30, 0)]
     [InlineData(BaseUrl, UserAgent, 30, -1)]
     public async Task AddMediaWikiClient_InvalidOptions_ThrowsOptionsValidationException(
         string baseUrl,
         string userAgent,
-        int timeoutSeconds,
+        double timeoutSeconds,
         int? maxResponseSize)
     {
         var services = new ServiceCollection();
@@ -737,6 +757,27 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
 
         Assert.Contains("d.hh:mm:ss", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_SectionTimeoutIsInfinite_BindsInfiniteTimeSpan()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            [$"{MediaWikiOptions.Position}:BaseUrl"] = BaseUrl,
+            [$"{MediaWikiOptions.Position}:UserAgent"] = UserAgent,
+            [$"{MediaWikiOptions.Position}:Timeout"] = "-00:00:00.001"
+        });
+
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(configuration.GetSection(MediaWikiOptions.Position));
+
+        await using var provider = services.BuildServiceProvider();
+
+        using var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(IMediaWikiClient));
+
+        Assert.Equal(Timeout.InfiniteTimeSpan, httpClient.Timeout);
     }
 
     [Theory]

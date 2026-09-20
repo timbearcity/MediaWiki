@@ -46,14 +46,14 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 }
 ```
 
-| Option                | Default    | Notes                                                                                                                                     |
-|-----------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| `BaseUrl`             | none       | Required. Absolute `http` or `https` URL of the REST endpoint.                                                                            |
-| `UserAgent`           | none       | Required. Sent ahead of this library's own token.                                                                                         |
-| `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`, so at most 24.20:31:23.647. Bound as `d.hh:mm:ss`: `"30"` is 30 days, `"00:00:30"` is 30 seconds. |
-| `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates.   |
-| `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write.                                                       |
-| `AccessTokenProvider` | none       | Optional callback asked for the bearer token on each request, for a token that expires. Code only; exclusive with `AccessToken`.          |
+| Option                | Default    | Notes                                                                                                                                                                                                                                                     |
+|-----------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `BaseUrl`             | none       | Required. Absolute `http` or `https` URL of the REST endpoint.                                                                                                                                                                                            |
+| `UserAgent`           | none       | Required. Sent ahead of this library's own token.                                                                                                                                                                                                         |
+| `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`, so at most 24.20:31:23.647, or `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration) to let a resilience handler own the timeout. Bound as `d.hh:mm:ss`: `"30"` is 30 days, `"00:00:30"` is 30 seconds. |
+| `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates.                                                                                                                   |
+| `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write.                                                                                                                                                                       |
+| `AccessTokenProvider` | none       | Optional callback asked for the bearer token on each request, for a token that expires. Code only; exclusive with `AccessToken`.                                                                                                                          |
 
 Each registration binds one client to one wiki: `BaseUrl` is the `HttpClient` base address and `AccessToken` is only valid on that wiki. Registering the same
 wiki twice throws from the second `AddMediaWikiClient` call.
@@ -334,6 +334,9 @@ builder.Services
     .AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOptions.Position))
     .AddStandardResilienceHandler();
 ```
+
+The handler's timeouts and the client's own `Timeout` run side by side, and whichever expires first wins. To leave timing out to the handler alone, set
+`Timeout` to `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration).
 
 A handler you add is yours to catch. When the standard handler gives up, it throws its own exceptions rather than `MediaWikiException`:
 `TimeoutRejectedException`

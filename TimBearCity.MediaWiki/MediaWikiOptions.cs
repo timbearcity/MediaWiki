@@ -34,8 +34,9 @@ public sealed class MediaWikiOptions
 
     /// <summary>
     /// Request timeout duration. Must be greater than zero and at most 24.20:31:23.647, the most
-    /// <see cref="HttpClient.Timeout"/> accepts. A configuration value is read as <c>d.hh:mm:ss</c>, so <c>"30"</c>
-    /// is 30 days; write 30 seconds as <c>"00:00:30"</c>.
+    /// <see cref="HttpClient.Timeout"/> accepts, or <see cref="Timeout.InfiniteTimeSpan"/> to let a
+    /// resilience handler own the timeout instead. A configuration value is read as <c>d.hh:mm:ss</c>, so <c>"30"</c>
+    /// is 30 days; write 30 seconds as <c>"00:00:30"</c> and the infinite timeout as <c>"-00:00:00.001"</c>.
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 

@@ -387,6 +387,7 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     [InlineData(BaseUrl, "   ", 30, null)]
     [InlineData(BaseUrl, UserAgent, 0, null)]
     [InlineData(BaseUrl, UserAgent, -1, null)]
+    [InlineData(BaseUrl, UserAgent, int.MaxValue / 1000 + 1, null)]
     [InlineData(BaseUrl, UserAgent, 30, 0)]
     [InlineData(BaseUrl, UserAgent, 30, -1)]
     public async Task AddMediaWikiClient_InvalidOptions_ThrowsOptionsValidationException(
@@ -714,6 +715,28 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(TimeSpan.FromSeconds(30), options.Timeout);
         Assert.Null(options.AccessToken);
         Assert.Null(options.MaxResponseSize);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_SectionTimeoutInWholeDays_ThrowsOptionsValidationExceptionNamingTheFormat()
+    {
+        // "30" is 30 days to TimeSpan.Parse, above what HttpClient accepts, and the likely intent was 30 seconds.
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            [$"{MediaWikiOptions.Position}:BaseUrl"] = BaseUrl,
+            [$"{MediaWikiOptions.Position}:UserAgent"] = UserAgent,
+            [$"{MediaWikiOptions.Position}:Timeout"] = "30"
+        });
+
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(configuration.GetSection(MediaWikiOptions.Position));
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        Assert.Contains("d.hh:mm:ss", exception.Message, StringComparison.Ordinal);
     }
 
     [Theory]

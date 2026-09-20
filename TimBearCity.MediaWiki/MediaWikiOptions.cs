@@ -33,7 +33,9 @@ public sealed class MediaWikiOptions
     public int? MaxResponseSize { get; set; }
 
     /// <summary>
-    /// Request timeout duration.
+    /// Request timeout duration. Must be greater than zero and at most 24.20:31:23.647, the most
+    /// <see cref="HttpClient.Timeout"/> accepts. A configuration value is read as <c>d.hh:mm:ss</c>, so <c>"30"</c>
+    /// is 30 days; write 30 seconds as <c>"00:00:30"</c>.
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 

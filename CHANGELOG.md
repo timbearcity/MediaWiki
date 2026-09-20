@@ -47,6 +47,9 @@ compares each release against the previous one, so a change to the contract cann
 - A `BaseUrl` without a scheme, such as `localhost:8080/w/rest.php/v1/`, now fails validation at startup instead of passing it and making every call
   throw `NotSupportedException` ([#24](https://github.com/timbearcity/MediaWiki/issues/24)). `Uri` reads the host of such a value as its scheme, so the
   validator now also requires the scheme to be `http` or `https`; a value with another scheme, such as `ftp://`, is rejected the same way.
+- A `Timeout` above what `HttpClient` accepts (24.20:31:23.647) now fails validation at startup instead of passing it and making the client throw
+  `ArgumentOutOfRangeException` when resolved ([#25](https://github.com/timbearcity/MediaWiki/issues/25)). The message names the bound and the
+  `d.hh:mm:ss` format a configuration value is read in, since `"30"` binds as 30 days rather than 30 seconds.
 
 ## [0.1.0] - 2026-09-15
 

@@ -8,17 +8,14 @@ namespace TimBearCity.MediaWiki;
 /// </summary>
 /// <remarks>
 /// Sits inside <see cref="RedirectHandler"/>, so a redirect the wiki answers with goes out with the token as well,
-/// unless the hop leaves the wiki and the request is marked <see cref="RedirectHandler.IsAnonymous"/>.
+/// unless the hop leaves the wiki and the request is marked <see cref="RedirectHandler.IsAnonymous"/>; the redirect
+/// handler has cleared the header by then, and this one leaves it cleared.
 /// </remarks>
 internal sealed class AccessTokenHandler(Func<CancellationToken, ValueTask<string?>> accessTokenProvider) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (request.Options.TryGetValue(RedirectHandler.IsAnonymous, out _))
-        {
-            request.Headers.Authorization = null;
-        }
-        else
+        if (!request.Options.TryGetValue(RedirectHandler.IsAnonymous, out _))
         {
             var accessToken = await accessTokenProvider(cancellationToken).ConfigureAwait(false);
 

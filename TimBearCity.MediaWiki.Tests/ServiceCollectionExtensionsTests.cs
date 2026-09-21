@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -256,6 +257,67 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         // The token was meant for the wiki, so a hop off it, even to the same host on another scheme or port, goes without.
         Assert.Equal(["secret-token", null], handler.Hops.Select(hop => hop.Token));
         Assert.Equal(location, handler.Hops[1].Uri);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TemporaryRedirect, "POST")]
+    [InlineData(HttpStatusCode.TemporaryRedirect, "PUT")]
+    [InlineData(HttpStatusCode.PermanentRedirect, "PUT")]
+    public async Task AddMediaWikiClient_CrossOriginRedirectOfAWrite_ReportsTheRedirect(HttpStatusCode statusCode, string method)
+    {
+        const string location = "https://other.example.net/w/rest.php/v1/page/Albert_Einstein";
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(statusCode, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = "secret-token";
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+        var client = provider.GetRequiredService<IMediaWikiClient>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => method == "POST"
+            ? client.CreatePageAsync(EinsteinPage.Title, EinsteinPage.Source, "Created", cancellationToken: cancellationToken)
+            : client.UpdatePageAsync(EinsteinPage.Key, EinsteinPage.Source, "Updated", cancellationToken: cancellationToken));
+
+        // A 307 or 308 re-sends the body, the source and CSRF token among it, so off the wiki the redirect is reported instead.
+        Assert.Single(handler.Hops);
+        Assert.Equal(statusCode, exception.StatusCode);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_CrossOriginRedirectWithCallerHeaders_SendsTheHopWithoutThem()
+    {
+        const string location = "https://other.example.net/w/rest.php/v1/page/Albert_Einstein";
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.TemporaryRedirect, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+            {
+                options.BaseUrl = BaseUrl;
+                options.UserAgent = UserAgent;
+            })
+            .ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>()
+            .ConfigureHttpClient(client =>
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "caller-token");
+                client.DefaultRequestHeaders.Add("Cookie", "session=secret");
+            });
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        // Without a token in the options there is no AccessTokenHandler, so the redirect handler itself has to clear what the caller set.
+        Assert.Equal([$"{BaseUrl}page/{EinsteinPage.Key}", location], handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(["caller-token", null], handler.Hops.Select(hop => hop.Token));
+        Assert.Equal(["session=secret", null], handler.Hops.Select(hop => hop.Cookie));
     }
 
     [Fact]

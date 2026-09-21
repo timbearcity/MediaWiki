@@ -870,7 +870,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
             return await IsAbsentAsync(requestUri, response, AbsentPageHistoryErrorKeys, cancellationToken).ConfigureAwait(false)
                 ? null
                 : await ReadJsonAsync(requestUri, response, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistoryCount, cancellationToken)
-                .ConfigureAwait(false);
+                    .ConfigureAwait(false);
         }
         finally
         {

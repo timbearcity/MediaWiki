@@ -14,7 +14,8 @@ namespace TimBearCity.MediaWiki;
 /// mirror the primary handler's: a <c>303</c> re-sends as <c>GET</c>, as do a <c>301</c> and <c>302</c> to a
 /// <c>POST</c>; a <c>307</c> and <c>308</c> keep the method and body; a hop off <c>https</c> onto <c>http</c> is not
 /// taken; and after <see cref="MaxRedirects"/> hops the last redirect is returned as it is. A hop to another origin
-/// goes out anonymously, since the token was meant for the wiki and not for wherever it points.
+/// goes out without <c>Authorization</c> or <c>Cookie</c>, whoever set them, since they were meant for the wiki and not
+/// for wherever it points; and it is only taken as a <c>GET</c>, since anything else would carry the body there too.
 /// </para>
 /// <para>
 /// The target is also repaired where the wiki left it broken. MediaWiki 1.43 through 1.45 build the <c>301</c> to a
@@ -29,7 +30,8 @@ internal sealed class RedirectHandler : DelegatingHandler
     private const int MaxRedirects = 10;
 
     /// <summary>
-    /// Present on a request that must go out without the bearer token, which <see cref="AccessTokenHandler"/> honors.
+    /// Present on a request that must go out without the bearer token, which <see cref="AccessTokenHandler"/> honors by
+    /// not setting it again.
     /// </summary>
     internal static readonly HttpRequestOptionsKey<bool> IsAnonymous = new("TimBearCity.MediaWiki.IsAnonymous");
 
@@ -82,15 +84,24 @@ internal sealed class RedirectHandler : DelegatingHandler
                 return response;
             }
 
-            if (!IsSameOrigin(requestUri, redirectUri))
-            {
-                request.Options.Set(IsAnonymous, true);
-            }
-
             if (ShouldSendAsGet(response.StatusCode, request.Method))
             {
                 request.Method = HttpMethod.Get;
                 request.Content = null;
+            }
+
+            if (!IsSameOrigin(requestUri, redirectUri))
+            {
+                // Anything but a GET would re-send the body, an edit's source and CSRF token among it, to a host it was not meant for.
+                if (request.Method != HttpMethod.Get)
+                {
+                    return response;
+                }
+
+                // Cleared here, and not left to AccessTokenHandler, so that a header the caller set on the HttpClient goes as well.
+                request.Headers.Authorization = null;
+                request.Headers.Remove("Cookie");
+                request.Options.Set(IsAnonymous, true);
             }
 
             request.RequestUri = redirectUri;

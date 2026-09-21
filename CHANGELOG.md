@@ -18,6 +18,11 @@ compares each release against the previous one, so a change to the contract cann
   a key with a `301` whose target keeps the route's `{type}` placeholder unsubstituted, which the wiki then rejects. The client now fills the
   placeholder from the request it is redirecting before following the `301`, and a client built on a plain `HttpClient`, whose handler follows the
   redirect on its own, repeats the request with the placeholder filled in when it lands on that `400`.
+- A redirect to another scheme, host or port no longer carries an `Authorization` or `Cookie` header set on the `HttpClient` itself, through
+  `ConfigureHttpClient` or a handler added with `AddHttpMessageHandler` ([#34](https://github.com/timbearcity/MediaWiki/issues/34)). Only the token from
+  `AccessToken` or `AccessTokenProvider` was dropped on such a hop; the client now clears both headers where it decides the hop leaves the wiki. A `307` or
+  `308` off the wiki is also no longer followed for anything but a `GET`, since it would re-send the body, an edit's `source` and CSRF token among it, to
+  that host; it is reported as `MediaWikiException` instead.
 
 ## [0.2.0] - 2026-09-20
 

@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using TimBearCity.MediaWiki.Pages;
 using Xunit;
 
 namespace TimBearCity.MediaWiki.Tests;
@@ -713,6 +714,39 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         // A 303, or a 301 or 302 to a POST, is re-sent as a GET without the body; a 307 or 308 repeats the request as it was.
         Assert.Equal([method, expectedMethod], handler.Hops.Select(hop => hop.Method.Method));
         Assert.Equal(expectedMethod == "GET" ? null : handler.RequestBodies[0], handler.RequestBodies[1]);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_RedirectWithPlaceholder_FillsItFromTheRequest()
+    {
+        // MediaWiki 1.43 through 1.45 build the 301 to a normalized title from the route template with only {title} filled in,
+        // so the history counts endpoint points at a {type} it then rejects with 400.
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(
+            HttpStatusCode.Moved,
+            "/w/rest.php/v1/page/Talk%3AEarth/history/counts/{type}?from=1&to=2",
+            """{ "count": 42, "limit": false }"""));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        var count = await provider.GetRequiredService<IMediaWikiClient>().GetPageHistoryCountAsync(
+            "talk:Earth",
+            MediaWikiPageHistoryCountType.Edits,
+            1,
+            2,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            [$"{BaseUrl}page/talk%3AEarth/history/counts/edits?from=1&to=2", $"{BaseUrl}page/Talk%3AEarth/history/counts/edits?from=1&to=2"],
+            handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(42, count?.Count);
     }
 
     [Fact]

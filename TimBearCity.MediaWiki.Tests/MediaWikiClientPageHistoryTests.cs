@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Mime;
+using System.Text;
 using TimBearCity.MediaWiki.Pages;
 using Xunit;
 
@@ -33,6 +35,20 @@ public sealed class MediaWikiClientPageHistoryTests
           ],
           "latest": "https://en.wikipedia.org/w/rest.php/v1/page/Solar_System/history",
           "older": "https://en.wikipedia.org/w/rest.php/v1/page/Solar_System/history?older_than=1218700625"
+        }
+        """;
+
+    private const string PlaceholderRejectedJson =
+        """
+        {
+          "error": "parameter-validation-failed",
+          "name": "type",
+          "value": "{type}",
+          "failureCode": "badvalue",
+          "errorKey": "badvalue",
+          "messageTranslations": { "en": "Unrecognized value for parameter \"type\": {type}." },
+          "httpCode": 400,
+          "httpReason": "Bad Request"
         }
         """;
 
@@ -209,6 +225,39 @@ public sealed class MediaWikiClientPageHistoryTests
     }
 
     [Theory]
+    [InlineData(null)]
+    [InlineData("page/Albert_Einstein/history/counts/edits")]
+    [InlineData("https://proxy.example/w/rest.php/v1/page/Albert_Einstein/history/counts/{type}")]
+    public async Task GetPageHistoryCountAsync_BadRequestNotFromPlaceholder_ThrowsWithoutRepeating(string? landedUri)
+    {
+        // A 400 is repeated only when the response says it landed on a placeholder under the base address: a handler that
+        // reports no request, one that answered the request as sent, and a redirect that led off the wiki are all reported as they are.
+        using var handler = HttpMessageHandlerStub.CreateResponding(request =>
+        {
+            if (landedUri is not null)
+            {
+                request.RequestUri = new Uri(new Uri(HttpMessageHandlerStub.DefaultBaseAddress), landedUri);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent(PlaceholderRejectedJson, Encoding.UTF8, MediaTypeNames.Application.Json),
+                RequestMessage = landedUri is null ? null : request
+            };
+        });
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHistoryCountAsync(
+            "Albert_Einstein",
+            MediaWikiPageHistoryCountType.Edits,
+            cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+        Assert.Single(handler.Hops);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("   ")]
     public async Task GetPageHistoryCountAsync_BlankKey_ThrowsArgumentException(string key)
@@ -245,8 +294,7 @@ public sealed class MediaWikiClientPageHistoryTests
     [Fact]
     public async Task GetPageHistoryCountAsync_KeyWithSpaces_RequestsUnderscoredKey()
     {
-        // The wiki redirects a title with spaces to a counts path whose {type} placeholder is left unsubstituted, which it then
-        // rejects with 400, so the client sends the stored key form outright.
+        // The stored key form lands directly, sparing the round trip through the wiki's 301 to the normalized title.
         using var handler = HttpMessageHandlerStub.CreateReturningJson(HistoryCountJson);
         using var httpClient = handler.CreateClient();
 
@@ -284,6 +332,51 @@ public sealed class MediaWikiClientPageHistoryTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(count);
+    }
+
+    [Fact]
+    public async Task GetPageHistoryCountAsync_RedirectFollowedOntoPlaceholder_RepeatsWithTypeFilledIn()
+    {
+        // MediaWiki 1.43 through 1.45 redirect a title that needs normalizing to a counts path with {type} left unsubstituted, and
+        // a plain HttpClient follows it before the client can repair it, so the 400 the wiki answers with is what the client sees.
+        const string normalizedPath = "page/Albert_Einstein/history/counts/{type}?from=1218700000&to=1218700625";
+        var first = true;
+
+        using var handler = HttpMessageHandlerStub.CreateResponding(request =>
+        {
+            if (!first)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(HistoryCountJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            first = false;
+            request.RequestUri = new Uri(HttpMessageHandlerStub.DefaultBaseAddress + normalizedPath);
+
+            return new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent(PlaceholderRejectedJson, Encoding.UTF8, MediaTypeNames.Application.Json),
+                RequestMessage = request
+            };
+        });
+        using var httpClient = handler.CreateClient();
+
+        var count = await new MediaWikiClient(httpClient).GetPageHistoryCountAsync(
+            "albert_Einstein",
+            MediaWikiPageHistoryCountType.Edits,
+            1218700000,
+            1218700625,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            [
+                $"{HttpMessageHandlerStub.DefaultBaseAddress}page/albert_Einstein/history/counts/edits?from=1218700000&to=1218700625",
+                $"{HttpMessageHandlerStub.DefaultBaseAddress}page/Albert_Einstein/history/counts/edits?from=1218700000&to=1218700625"
+            ],
+            handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(110, count?.Count);
     }
 
     [Fact]

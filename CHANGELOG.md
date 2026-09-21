@@ -11,6 +11,14 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Fixed
+
+- `GetPageHistoryCountAsync` no longer fails with `400 Bad Request` for a key the wiki normalizes, such as `albert_Einstein`, `talk:Earth` or one
+  with a doubled, leading or trailing underscore ([#33](https://github.com/timbearcity/MediaWiki/issues/33)). MediaWiki 1.43 through 1.45 answer such
+  a key with a `301` whose target keeps the route's `{type}` placeholder unsubstituted, which the wiki then rejects. The client now fills the
+  placeholder from the request it is redirecting before following the `301`, and a client built on a plain `HttpClient`, whose handler follows the
+  redirect on its own, repeats the request with the placeholder filled in when it lands on that `400`.
+
 ## [0.2.0] - 2026-09-20
 
 ### Changed

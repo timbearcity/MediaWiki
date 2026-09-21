@@ -245,7 +245,11 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
 
         lock (_requestsLock)
         {
-            _hops.Add(new Hop(request.Method, request.RequestUri!.AbsoluteUri, request.Headers.Authorization?.Parameter));
+            _hops.Add(new Hop(
+                request.Method,
+                request.RequestUri!.AbsoluteUri,
+                request.Headers.Authorization?.Parameter,
+                request.Headers.TryGetValues("Cookie", out var cookies) ? string.Join("; ", cookies) : null));
             _requestBodies.Add(body);
             _requests.Add(request);
         }
@@ -253,6 +257,6 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
         return await _respond(request, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>One request as it went out: the method, the absolute URI and the bearer token, if any.</summary>
-    internal sealed record Hop(HttpMethod Method, string Uri, string? Token);
+    /// <summary>One request as it went out: the method, the absolute URI, and the bearer token and <c>Cookie</c> header, if any.</summary>
+    internal sealed record Hop(HttpMethod Method, string Uri, string? Token, string? Cookie);
 }

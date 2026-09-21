@@ -281,7 +281,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var requestUri = AppendQuery($"{BuildPageUri(key, "history")}/counts/{GetQueryValue(type)}", query);
 
-        return GetJsonOrNullAsync(requestUri, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistoryCount, AbsentPageHistoryErrorKeys, cancellationToken);
+        return GetPageHistoryCountAsync(requestUri, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -465,8 +465,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// <summary>The endpoint for one representation of a page.</summary>
     /// <param name="key">
     /// The page key or title, escaped into the request path. Spaces become underscores first: that is the form MediaWiki
-    /// stores, so the request lands directly instead of behind a <c>301</c>, and the history counts endpoint redirects
-    /// to a path with an unsubstituted <c>{type}</c> placeholder that the wiki then rejects.
+    /// stores, so the most common unnormalized key lands directly instead of behind a <c>301</c> to the normalized title.
     /// </param>
     /// <param name="representation">The path segment selecting the representation, or <see langword="null"/> for the source.</param>
     private static string BuildPageUri(string key, string? representation = null)
@@ -836,6 +835,74 @@ public sealed class MediaWikiClient : IMediaWikiClient
         return await IsAbsentAsync(requestUri, response, absentErrorKeys, cancellationToken, absentErrorKey).ConfigureAwait(false)
             ? null
             : await ReadJsonAsync(requestUri, response, typeInfo, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Fetches a history count, treating a missing page as <see langword="null"/>, and repeating the request once
+    /// when the primary handler followed the wiki's redirect for a title that needed normalizing onto a broken target.
+    /// </summary>
+    /// <remarks>
+    /// MediaWiki 1.43 through 1.45 answer such a title with a <c>301</c> to <c>page/{title}/history/counts/{type}</c>,
+    /// with only the title filled in. <see cref="RedirectHandler"/> repairs the target before following it, but a
+    /// client built on a plain <see cref="HttpClient"/> lets <see cref="HttpClientHandler"/> follow it as it is, and
+    /// gets the <c>400</c> the wiki answers the placeholder with. The response then names the target it landed on, so
+    /// the request is re-sent with the placeholder filled in from the original.
+    /// </remarks>
+    /// <param name="requestUri">The endpoint to fetch.</param>
+    /// <param name="cancellationToken">Token used to cancel the request.</param>
+    /// <param name="operation">The public method being served, which names the activity; supplied by the compiler.</param>
+    private async Task<MediaWikiPageHistoryCount?> GetPageHistoryCountAsync(
+        string requestUri,
+        CancellationToken cancellationToken,
+        [CallerMemberName] string operation = "")
+    {
+        using var activity = StartActivity(operation);
+        var response = await GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (response.StatusCode is HttpStatusCode.BadRequest && GetRepairedRequestUri(requestUri, response) is { } repairedRequestUri)
+            {
+                response.Dispose();
+                response = await GetAsync(repairedRequestUri, cancellationToken).ConfigureAwait(false);
+            }
+
+            return await IsAbsentAsync(requestUri, response, AbsentPageHistoryErrorKeys, cancellationToken).ConfigureAwait(false)
+                ? null
+                : await ReadJsonAsync(requestUri, response, MediaWikiJsonSerializerContext.Default.MediaWikiPageHistoryCount, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            response.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The request to repeat, relative to the base address, when a redirect the primary handler followed on its own
+    /// landed on a target with an unsubstituted placeholder; see
+    /// <see cref="GetPageHistoryCountAsync(string, CancellationToken, string)"/>. <see langword="null"/>
+    /// when the response came from the request as sent, or the target is not under the base address.
+    /// </summary>
+    /// <param name="requestUri">The endpoint that was fetched.</param>
+    /// <param name="response">
+    /// The response, whose request message carries the URI it was finally sent to; a handler that answers without one
+    /// leaves nothing to compare.
+    /// </param>
+    private string? GetRepairedRequestUri(string requestUri, HttpResponseMessage response)
+    {
+        if (response.RequestMessage?.RequestUri is not { } landedUri)
+        {
+            return null;
+        }
+
+        // Never null: the constructor requires it, and the request that produced the response was resolved against it.
+        var baseAddress = _httpClient.BaseAddress!;
+        var repairedUri = RedirectHandler.FillPlaceholders(new Uri(baseAddress, requestUri), landedUri);
+
+        return repairedUri == landedUri || !baseAddress.IsBaseOf(repairedUri)
+            ? null
+            : repairedUri.PathAndQuery[baseAddress.AbsolutePath.Length..];
     }
 
     /// <summary>Fetches a response that carries markup rather than JSON, treating a missing one as <see langword="null"/>.</summary>

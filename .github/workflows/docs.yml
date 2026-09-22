@@ -1,16 +1,9 @@
 name: Docs
 
 on:
+  # The site holds the tagged releases only, so it is published when one is tagged.
   push:
-    branches: [ main ]
-    paths:
-      - docs/**
-      - TimBearCity.MediaWiki/**
-      - README.md
-      - CHANGELOG.md
-      - CONTRIBUTING.md
-      - .config/dotnet-tools.json
-      - .github/workflows/docs.yml
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
     paths:
@@ -21,6 +14,7 @@ on:
       - CONTRIBUTING.md
       - .config/dotnet-tools.json
       - .github/workflows/docs.yml
+  # Republishes the releases between tags, for example after a fix to docs/ on main.
   workflow_dispatch:
 
 permissions:
@@ -31,9 +25,10 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
-# One deployment at a time, and a running one is left to finish so Pages never serves a half-written site.
+# One deployment at a time, whichever ref started it, and a running one is left to finish so Pages never serves a
+# half-written site. Each pull request builds in its own group.
 concurrency:
-  group: docs-${{ github.ref }}
+  group: docs-${{ github.event_name == 'pull_request' && github.ref || 'pages' }}
   cancel-in-progress: false
 
 jobs:
@@ -44,6 +39,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Every release is built from its tag, so the tags and their history are needed.
+          fetch-depth: 0
 
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -54,15 +52,54 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
 
-      - name: Build the site
+      # Not published: keeps the warning check on the docs the next release will ship.
+      - name: Check the current docs
         run: dotnet docfx docs/docfx.json --warningsAsErrors
+
+      - name: Build every release
+        shell: bash
+        run: |
+          set -euo pipefail
+          site="$PWD/_site"
+          base=https://timbearcity.github.io/MediaWiki
+          mkdir -p "$site"
+
+          # Stable releases only, newest first.
+          mapfile -t tags < <(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
+          latest=${tags[0]}
+
+          # Each release is built from its own source with this commit's docs config and template, so tags that predate
+          # docs/ still build. Warnings are allowed: an old tag can lack members that the current index.md links to.
+          for t in "${tags[@]}"; do
+            tree="$RUNNER_TEMP/src/$t"
+            git worktree add --detach "$tree" "$t"
+            rm -rf "$tree/docs" && cp -r docs "$tree/docs"
+            jq --arg u "$base/$t/" '.build.sitemap.baseUrl = $u' docs/docfx.json > "$tree/docs/docfx.json"
+            dotnet docfx "$tree/docs/docfx.json"
+            mv "$tree/docs/_site" "$site/$t"
+          done
+
+          jq -n --arg latest "$latest" '{latest: $latest, versions: $ARGS.positional}' --args "${tags[@]}" > "$site/versions.json"
+
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/"><link rel="canonical" href="%s/">\n' \
+            "$latest" "$latest" > "$site/index.html"
+
+          # Links from before the site was versioned (/MediaWiki/api/...) go to the same page in the latest release.
+          cat > "$site/404.html" <<EOF
+          <!doctype html><title>Not found</title><p>Page not found.</p>
+          <script>
+            const versions = $(jq -c .versions "$site/versions.json")
+            const rest = location.pathname.replace(/^\/MediaWiki\//, '')
+            if (!versions.includes(rest.split('/')[0])) location.replace('/MediaWiki/$latest/' + rest + location.hash)
+          </script>
+          EOF
 
       - name: Upload the site
         # A pull request only proves the site builds; the artifact is for the `deploy` job.
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: docs/_site
+          path: _site
 
   deploy:
     name: Deploy to GitHub Pages

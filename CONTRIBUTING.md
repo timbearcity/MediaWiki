@@ -26,7 +26,10 @@ dotnet tool restore
 dotnet docfx docs/docfx.json --serve
 ```
 
-The Docs workflow builds the site on every pull request that touches it, with warnings as errors, and publishes it to GitHub Pages on `main`.
+The site holds one copy per release, `v0.2.0/` and so on, with a version picker in the navbar; the root redirects to the newest. The Docs workflow
+publishes it to GitHub Pages when a `v*` tag is pushed, building every release's source with the docs config and template of the commit it runs on, so a
+fix to `docs/` on `main` reaches the site at the next tag or when the workflow is run by hand. On a pull request that touches the site it builds the
+current docs with warnings as errors, plus every release, without publishing.
 
 ## Commit messages
 

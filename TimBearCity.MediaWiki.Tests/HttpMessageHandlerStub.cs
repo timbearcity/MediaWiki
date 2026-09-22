@@ -36,7 +36,7 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
 
     /// <summary>
     /// Each request as it arrived, oldest first, including every hop of a redirect: <see cref="Requests"/> shows a
-    /// re-sent message only in the state its last hop left it.
+    /// message in the state it was left in, which for one a handler re-sent is its last send.
     /// </summary>
     public IReadOnlyList<Hop> Hops
     {
@@ -95,8 +95,9 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
 
     /// <summary>The requests this handler received, oldest first.</summary>
     /// <remarks>
-    /// A redirect is followed by re-sending the same message, so it appears here once per hop, in the state the last
-    /// hop left it; <see cref="Hops"/> has each hop as it went out.
+    /// A redirect sends each hop after the first as a copy, so every hop appears here as its own message. A message a
+    /// handler re-sent, such as a retry, appears once per send in the state the last one left it; <see cref="Hops"/>
+    /// has each send as it went out.
     /// </remarks>
     public IReadOnlyList<HttpRequestMessage> Requests
     {

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -638,6 +639,88 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_Redirect_CarriesVersionAndOptionsToTheNextHop()
+    {
+        var option = new HttpRequestOptionsKey<string>("Caller.Option");
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, $"{BaseUrl}page/Albert_Einstein", EinsteinPage.Json));
+
+        // Registered as a default, so that it sits outside the redirect handler and prepares the request the first hop goes out as.
+        services.ConfigureHttpClientDefaults(builder => builder.AddHttpMessageHandler(() => new ObservingHandler(request =>
+        {
+            request.Version = HttpVersion.Version20;
+            request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+            request.Options.Set(option, "caller-value");
+        })));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync("albert_Einstein", TestContext.Current.CancellationToken);
+
+        var hop = handler.Requests[1];
+        Assert.NotSame(handler.Requests[0], hop);
+        Assert.Equal(HttpVersion.Version20, hop.Version);
+        Assert.Equal(HttpVersionPolicy.RequestVersionOrHigher, hop.VersionPolicy);
+        Assert.True(hop.Options.TryGetValue(option, out var value));
+        Assert.Equal("caller-value", value);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.SeeOther, "PUT", $"{BaseUrl}page/Albert_Einstein")]
+    [InlineData(HttpStatusCode.TemporaryRedirect, "GET", "https://other.example.net/w/rest.php/v1/page/Albert_Einstein")]
+    public async Task AddMediaWikiClient_Redirect_LeavesTheCallerRequestAsItWas(HttpStatusCode statusCode, string method, string location)
+    {
+        var snapshots = new List<string>();
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(statusCode, location, EinsteinPage.Json));
+
+        // Outside the redirect handler, where a retry registered as a default would sit; it sees the request before and after.
+        services.ConfigureHttpClientDefaults(builder => builder.AddHttpMessageHandler(() => new ObservingHandler(
+            request => snapshots.Add(Describe(request)),
+            request => snapshots.Add(Describe(request)))));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+        var client = provider.GetRequiredService<IMediaWikiClient>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        if (method == "GET")
+        {
+            await client.GetPageAsync("albert_Einstein", cancellationToken);
+        }
+        else
+        {
+            await client.UpdatePageAsync("albert_Einstein", EinsteinPage.Source, "Updated", cancellationToken: cancellationToken);
+        }
+
+        Assert.Equal(2, handler.Hops.Count);
+        Assert.Equal(snapshots[0], snapshots[1]);
+
+        return;
+
+        static string Describe(HttpRequestMessage request)
+        {
+            var isAnonymous = request.Options.Any(option => option.Key == "TimBearCity.MediaWiki.IsAnonymous");
+            var body = request.Content?.ReadAsStringAsync(TestContext.Current.CancellationToken).GetAwaiter().GetResult();
+
+            return $"{request.Method} {request.RequestUri} anonymous={isAnonymous} body={body}";
+        }
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_RedirectLoop_StopsAfterTenHops()
     {
         var services = new ServiceCollection();
@@ -812,6 +895,43 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_RetryAfterCrossOriginRedirect_StartsAgainFromTheWiki()
+    {
+        const string mirror = "https://mirror.example.net/w/rest.php/v1/page/Albert_Einstein";
+        var wikiAnswers = 0;
+        var services = new ServiceCollection();
+
+        // The wiki sends the first attempt to a mirror that is down, and serves the page itself by the time the retry comes.
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateResponding(request => request.RequestUri!.AbsoluteUri == mirror
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : wikiAnswers++ == 0
+                ? new HttpResponseMessage(HttpStatusCode.TemporaryRedirect) { Headers = { Location = new Uri(mirror) } }
+                : new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(EinsteinPage.Json, Encoding.UTF8, MediaTypeNames.Application.Json)
+                }));
+
+        // A retry registered as a default sits outside the redirect handler and re-sends the request it was given.
+        services.ConfigureHttpClientDefaults(builder => builder.AddHttpMessageHandler(() => new RetryOnceHandler()));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = "secret-token";
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        var page = await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        Assert.Equal([$"{BaseUrl}page/{EinsteinPage.Key}", mirror, $"{BaseUrl}page/{EinsteinPage.Key}"], handler.Hops.Select(hop => hop.Uri));
+        Assert.Equal(["secret-token", null, "secret-token"], handler.Hops.Select(hop => hop.Token));
+        Assert.Equal(EinsteinPage.Title, page?.Title);
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_SectionOmitsTimeout_LeavesTimeoutAtDefault()
     {
         var configuration = BuildConfiguration(new Dictionary<string, string?>
@@ -928,5 +1048,38 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         }
 
         return handler;
+    }
+
+    /// <summary>Calls <c>before</c> with each request on its way in, and <c>after</c> with it once the response is back.</summary>
+    private sealed class ObservingHandler(Action<HttpRequestMessage> before, Action<HttpRequestMessage>? after = null) : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            before(request);
+
+            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            after?.Invoke(request);
+
+            return response;
+        }
+    }
+
+    /// <summary>Sends the request once more on a <c>503</c>, as a resilience handler does: the same message, as it was handed over.</summary>
+    private sealed class RetryOnceHandler : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.StatusCode is not HttpStatusCode.ServiceUnavailable)
+            {
+                return response;
+            }
+
+            response.Dispose();
+
+            return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

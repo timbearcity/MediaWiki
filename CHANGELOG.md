@@ -23,6 +23,12 @@ compares each release against the previous one, so a change to the contract cann
   `AccessToken` or `AccessTokenProvider` was dropped on such a hop; the client now clears both headers where it decides the hop leaves the wiki. A `307` or
   `308` off the wiki is also no longer followed for anything but a `GET`, since it would re-send the body, an edit's `source` and CSRF token among it, to
   that host; it is reported as `MediaWikiException` instead.
+- A retry handler registered outside the client's redirect handling, such as `AddStandardResilienceHandler` added through `ConfigureHttpClientDefaults`,
+  now re-sends the request the client built rather than the last hop of a redirect it followed ([#35](https://github.com/timbearcity/MediaWiki/issues/35)). The
+  redirect was followed by rewriting the request in place, so a retry after a `307` to
+  another host kept going there without the bearer token, and a `POST` answered with a `302` was retried as a `GET` without its body. Each hop after the
+  first now goes out as a copy of the request. `HttpResponseMessage.RequestMessage` still names the hop that answered. A resilience handler added to the
+  builder `AddMediaWikiClient` returns, as the README shows, sits inside the redirect handling and was not affected.
 
 ## [0.2.0] - 2026-09-20
 

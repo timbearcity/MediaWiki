@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace TimBearCity.MediaWiki;
@@ -22,6 +23,13 @@ namespace TimBearCity.MediaWiki;
 /// normalized title from the route template with only <c>{title}</c> filled in, so the history counts endpoint sends
 /// <c>page/Albert_Einstein/history/counts/{type}</c>, which the wiki then rejects with <c>400</c>; see
 /// <see cref="FillPlaceholders"/>.
+/// </para>
+/// <para>
+/// The caller's request goes out as it is for the first hop, and each hop after it as a copy that shares its content,
+/// so a handler outside this one, a retry above all, is left holding the request the client built and not the last
+/// hop: re-sending it asks the wiki again, with the original method, body and credentials. The response names the hop
+/// it answers, as <see cref="HttpResponseMessage.RequestMessage"/> does after the primary handler's own redirects. The
+/// copies are never disposed, since that would dispose the shared content under the caller.
 /// </para>
 /// </remarks>
 internal sealed class RedirectHandler : DelegatingHandler
@@ -70,47 +78,75 @@ internal sealed class RedirectHandler : DelegatingHandler
             : targetUri;
     }
 
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "A hop shares the caller's content; see the remarks.")]
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        var hop = request;
+        var response = await base.SendAsync(hop, cancellationToken).ConfigureAwait(false);
 
         for (var redirects = 0; redirects < MaxRedirects; redirects++)
         {
             // Never null inside the pipeline: HttpClient has combined it with the base address, or thrown, before any handler runs.
-            var requestUri = request.RequestUri!;
+            var requestUri = hop.RequestUri!;
 
             if (GetRedirectUri(requestUri, response) is not { } redirectUri)
             {
                 return response;
             }
 
-            if (ShouldSendAsGet(response.StatusCode, request.Method))
+            var shouldSendAsGet = ShouldSendAsGet(response.StatusCode, hop.Method);
+            var method = shouldSendAsGet ? HttpMethod.Get : hop.Method;
+            var isSameOrigin = IsSameOrigin(requestUri, redirectUri);
+
+            // Anything but a GET would re-send the body, an edit's source and CSRF token among it, to a host it was not meant for.
+            if (!isSameOrigin && method != HttpMethod.Get)
             {
-                request.Method = HttpMethod.Get;
-                request.Content = null;
+                return response;
             }
 
-            if (!IsSameOrigin(requestUri, redirectUri))
-            {
-                // Anything but a GET would re-send the body, an edit's source and CSRF token among it, to a host it was not meant for.
-                if (request.Method != HttpMethod.Get)
-                {
-                    return response;
-                }
+            hop = CreateHop(hop, method, redirectUri, shouldSendAsGet ? null : hop.Content);
 
+            if (!isSameOrigin)
+            {
                 // Cleared here, and not left to AccessTokenHandler, so that a header the caller set on the HttpClient goes as well.
-                request.Headers.Authorization = null;
-                request.Headers.Remove("Cookie");
-                request.Options.Set(IsAnonymous, true);
+                hop.Headers.Authorization = null;
+                hop.Headers.Remove("Cookie");
+                hop.Options.Set(IsAnonymous, true);
             }
-
-            request.RequestUri = redirectUri;
 
             response.Dispose();
-            response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            response = await base.SendAsync(hop, cancellationToken).ConfigureAwait(false);
         }
 
         return response;
+    }
+
+    /// <summary>
+    /// A copy of <paramref name="request"/> for the next hop: its headers, options and HTTP version, with the given
+    /// method, target and content.
+    /// </summary>
+    private static HttpRequestMessage CreateHop(HttpRequestMessage request, HttpMethod method, Uri requestUri, HttpContent? content)
+    {
+        var hop = new HttpRequestMessage(method, requestUri)
+        {
+            Content = content,
+            Version = request.Version,
+            VersionPolicy = request.VersionPolicy
+        };
+
+        foreach (var header in request.Headers)
+        {
+            hop.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        IDictionary<string, object?> options = hop.Options;
+
+        foreach (var option in request.Options)
+        {
+            options[option.Key] = option.Value;
+        }
+
+        return hop;
     }
 
     /// <summary>The absolute URI a redirect response points at, or <see langword="null"/> if it is not one to follow.</summary>

@@ -13,7 +13,8 @@ public sealed class MediaWikiOptions
     public string? AccessToken { get; set; }
 
     /// <summary>
-    /// Optional source of the bearer token, asked once per request, for a token that expires or differs per user.
+    /// Optional source of the bearer token, for a token that expires or differs per user. It is asked before each HTTP
+    /// request, including each hop of a redirect and each retry, so a provider that fetches the token should cache it.
     /// Answering <see langword="null"/> or whitespace sends the request anonymously. Cannot be combined with
     /// <see cref="AccessToken"/>, and cannot be bound from configuration.
     /// </summary>

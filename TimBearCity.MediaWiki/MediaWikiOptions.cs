@@ -21,7 +21,7 @@ public sealed class MediaWikiOptions
 
     /// <summary>
     /// Base URL of the MediaWiki REST endpoint (e.g., "https://en.wikipedia.org/w/rest.php/v1/"). Must be absolute, with an
-    /// http or https scheme, and its path must end with <c>/</c>.
+    /// http or https scheme, its path must end with <c>/</c>, and it must have no query string or fragment.
     /// </summary>
     public string BaseUrl { get; set; } = string.Empty;
 

@@ -37,6 +37,10 @@ compares each release against the previous one, so a change to the contract cann
   another host kept going there without the bearer token, and a `POST` answered with a `302` was retried as a `GET` without its body. Each hop after the
   first now goes out as a copy of the request. `HttpResponseMessage.RequestMessage` still names the hop that answered. A resilience handler added to the
   builder `AddMediaWikiClient` returns, as the README shows, sits inside the redirect handling and was not affected.
+- `ValidateOnStart` now refuses a `MediaWikiOptions.BaseUrl` with a query string or fragment, such as
+  `https://wiki.example/w/rest.php/v1/?apikey=abc` ([#37](https://github.com/timbearcity/MediaWiki/issues/37)). Resolving a request against the base
+  address drops both, so the value never reached the wiki and nothing said so. `new MediaWikiClient(httpClient)` throws `ArgumentException` for such a
+  `BaseAddress` too.
 
 ## [0.2.0] - 2026-09-20
 

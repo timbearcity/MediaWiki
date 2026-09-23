@@ -4,6 +4,23 @@ namespace TimBearCity.MediaWiki.Tests;
 
 public sealed class MediaWikiClientTests
 {
+    [Theory]
+    [InlineData("https://example.org/w/rest.php/v1/?apikey=abc")]
+    [InlineData("https://example.org/w/rest.php/v1/#section")]
+    public void Constructor_BaseAddressWithQueryOrFragment_ThrowsArgumentExceptionNamingThem(string baseAddress)
+    {
+        using var httpClient = new HttpClient();
+        httpClient.BaseAddress = new Uri(baseAddress, UriKind.Absolute);
+
+        var exception = Assert.Throws<ArgumentException>(() => new MediaWikiClient(httpClient));
+
+        Assert.Equal("httpClient", exception.ParamName);
+        Assert.StartsWith(
+            "HttpClient.BaseAddress must not have a query string or fragment, since every request drops both, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Constructor_BaseAddressWithoutTrailingSlash_ThrowsArgumentExceptionNamingTheSlash()
     {

@@ -11,6 +11,14 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Changed
+
+- `MediaWikiOptions.BaseUrl` must now end with `/`, and `ValidateOnStart` refuses one that does not, such as
+  `https://en.wikipedia.org/w/rest.php/v1` ([#36](https://github.com/timbearcity/MediaWiki/issues/36)). `AddMediaWikiClient` used to append the slash,
+  while `new MediaWikiClient(httpClient)` accepted a `BaseAddress` without one and then sent every request one path segment short, to
+  `/w/rest.php/page/Earth` rather than `/w/rest.php/v1/page/Earth`. Both paths now refuse such an address: the constructor throws `ArgumentException`
+  saying so. Add the trailing slash to `BaseUrl` when upgrading.
+
 ### Fixed
 
 - `GetPageHistoryCountAsync` no longer fails with `400 Bad Request` for a key the wiki normalizes, such as `albert_Einstein`, `talk:Earth` or one

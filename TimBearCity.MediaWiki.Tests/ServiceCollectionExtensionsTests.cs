@@ -162,7 +162,7 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
-    public async Task AddMediaWikiClient_BaseUrlWithoutTrailingSlash_AppendsTrailingSlash()
+    public async Task AddMediaWikiClient_BaseUrlWithoutTrailingSlash_ThrowsOptionsValidationExceptionNamingTheSlash()
     {
         var services = new ServiceCollection();
 
@@ -170,13 +170,16 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         {
             options.BaseUrl = "https://en.wikipedia.org/w/rest.php/v1";
             options.UserAgent = UserAgent;
-        }).ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+        });
 
         await using var provider = services.BuildServiceProvider();
 
-        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
 
-        Assert.Equal($"{BaseUrl}search/page?q=physicist&limit=10", _wikipediaHandler.Request.RequestUri?.AbsoluteUri);
+        Assert.Contains(
+            "MediaWikiOptions.BaseUrl must end with '/', or every request loses its last path segment, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
+            exception.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -421,6 +424,24 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.DoesNotContain(accessToken, printed, StringComparison.Ordinal);
         Assert.DoesNotContain(csrfToken, printed, StringComparison.Ordinal);
         Assert.DoesNotContain("9ed1499d99c0c34c73faa07157b3b6075b427365", printed, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_HostOnlyBaseUrl_SendsRequestsUnderTheRoot()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = "https://en.wikipedia.org";
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        Assert.Equal("https://en.wikipedia.org/search/page?q=physicist&limit=10", _wikipediaHandler.Request.RequestUri?.AbsoluteUri);
     }
 
     [Fact]

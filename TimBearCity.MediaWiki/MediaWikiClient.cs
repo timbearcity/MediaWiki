@@ -114,7 +114,10 @@ public sealed class MediaWikiClient : IMediaWikiClient
     private readonly HttpClient _httpClient;
 
     /// <summary>Creates a client over an <see cref="HttpClient"/> that already has its base address configured.</summary>
-    /// <param name="httpClient">The configured client; its <see cref="HttpClient.BaseAddress"/> must be set.</param>
+    /// <param name="httpClient">
+    /// The configured client; its <see cref="HttpClient.BaseAddress"/> must be set, and its path must end with <c>/</c>, since
+    /// request URIs are relative and resolving one against <c>.../rest.php/v1</c> drops the <c>v1</c>.
+    /// </param>
     public MediaWikiClient(HttpClient httpClient)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -123,6 +126,12 @@ public sealed class MediaWikiClient : IMediaWikiClient
         {
             throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} must be set. " +
                                         $"Register the client with {nameof(ServiceCollectionExtensions.AddMediaWikiClient)}.", nameof(httpClient));
+        }
+
+        if (!httpClient.BaseAddress.AbsolutePath.EndsWith('/'))
+        {
+            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {ServiceCollectionExtensions.TrailingSlashRequirement}",
+                                        nameof(httpClient));
         }
 
         _httpClient = httpClient;

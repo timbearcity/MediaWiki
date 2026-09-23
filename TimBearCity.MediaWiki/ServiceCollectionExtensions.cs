@@ -14,6 +14,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>Registration helpers for <see cref="IMediaWikiClient"/>.</summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// The end of the message refusing a base address whose path lacks a trailing slash, shared by the options validator and
+    /// the <see cref="MediaWikiClient"/> constructor so both paths word it alike.
+    /// </summary>
+    internal const string TrailingSlashRequirement =
+        "must end with '/', or every request loses its last path segment, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".";
+
     /// <summary>The options name and service key used by the unnamed, single-wiki registration.</summary>
     private static readonly string DefaultName = Options.Options.DefaultName;
 
@@ -109,6 +116,9 @@ public static class ServiceCollectionExtensions
             .Validate(
                 options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} must be an absolute http or https URL, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".")
+            .Validate(
+                options => !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) || uri.AbsolutePath.EndsWith('/'),
+                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} {TrailingSlashRequirement}")
             .Validate(
                 options => (options.Timeout > TimeSpan.Zero && options.Timeout <= MaxTimeout) || options.Timeout == Timeout.InfiniteTimeSpan,
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero and at most {MaxTimeout}, or Timeout.InfiniteTimeSpan. A configuration value is read as d.hh:mm:ss, so \"30\" is 30 days; write 30 seconds as \"00:00:30\".")
@@ -243,10 +253,7 @@ public static class ServiceCollectionExtensions
         {
             var options = serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name);
 
-            // Relative request URIs only combine with a base address that ends in a slash.
-            var baseUrl = options.BaseUrl.EndsWith('/') ? options.BaseUrl : $"{options.BaseUrl}/";
-
-            client.BaseAddress = new Uri(baseUrl, UriKind.Absolute);
+            client.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
             client.Timeout = options.Timeout;
 
             if (options.MaxResponseSize is { } maxResponseSize)

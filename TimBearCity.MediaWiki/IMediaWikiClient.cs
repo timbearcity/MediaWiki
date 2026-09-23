@@ -93,8 +93,8 @@ public interface IMediaWikiClient
     /// <param name="title">The file's title, with or without its namespace, e.g. <c>File:Fennec Fox.jpg</c>.</param>
     /// <param name="cancellationToken">Token used to cancel the request.</param>
     /// <returns>
-    /// The thumbnails, or <see langword="null"/> if the file does not exist or the wiki cannot render it, as with audio
-    /// or a document type it has no handler for.
+    /// The thumbnails, or <see langword="null"/> if the file does not exist or the wiki cannot produce thumbnails for it,
+    /// as for a media type it has no handler installed for.
     /// </returns>
     /// <exception cref="ArgumentException"><paramref name="title"/> is empty or whitespace.</exception>
     /// <exception cref="MediaWikiException">The request failed, timed out, or returned a response that could not be read.</exception>

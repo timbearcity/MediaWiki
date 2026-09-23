@@ -53,7 +53,7 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 | `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`, so at most 24.20:31:23.647, or `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration) to let a resilience handler own the timeout. Bound as `d.hh:mm:ss`: `"30"` is 30 days, `"00:00:30"` is 30 seconds. |
 | `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates.                                                                                                                   |
 | `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write.                                                                                                                                                                       |
-| `AccessTokenProvider` | none       | Optional callback asked for the bearer token on each request, for a token that expires. Code only; exclusive with `AccessToken`.                                                                                                                          |
+| `AccessTokenProvider` | none       | Optional callback asked for the bearer token before each HTTP request, including each redirect hop and retry, so it should cache. Code only; exclusive with `AccessToken`.                                                                                |
 
 Each registration binds one client to one wiki: `BaseUrl` is the `HttpClient` base address and `AccessToken` is only valid on that wiki. Registering the same
 wiki twice throws from the second `AddMediaWikiClient` call.
@@ -141,7 +141,8 @@ The client speaks the core REST API, so it works against any MediaWiki, not only
 - **Extensions.** `Description` on a search result needs a provider such as Wikibase or ShortDescription, and `Thumbnail` needs PageImages; both are `null`
   otherwise.
 
-The file endpoints return protocol-relative URLs (`//host/...`) on every wiki, so combine them with the wiki's scheme before handing them to `Uri`.
+The file endpoints return a mix of absolute and protocol-relative URLs (`//host/...`), sometimes within one response, so add the wiki's scheme only to a URL
+that starts with `//` before handing it to `Uri`.
 
 Point `BaseUrl` at the host `$wgServer` names. The HTML and lint endpoints redirect to absolute URLs built from it, for a redirect page and for title
 normalization. The client follows redirects itself rather than leaving them to `HttpClientHandler`, which strips the bearer token from every redirected
@@ -229,12 +230,14 @@ the matching content.
 
 A wiki that draws on a shared repository, as Wikipedia does on Wikimedia Commons, answers for the files it borrows as well as the ones it hosts. The renditions
 are nullable throughout: a media type the wiki has no preferred form for is reported as an absence rather than an error. In the same spirit,
-`GetFileThumbnailsAsync` answers `null` for a file the wiki cannot render at all, such as audio, which the API refuses with `400`.
+`GetFileThumbnailsAsync` answers `null` for a file the wiki cannot produce thumbnails for, such as one of a media type it has no handler installed for, which
+the API refuses with `400`. A wiki with the handler answers audio and video with thumbnails of the file-type icon, at a `Width` and `Height` of `0`.
 
 ## Write
 
 Creating and updating pages needs an authenticated client: set `AccessToken` to an OAuth2 token or personal access token carrying the rights the wiki asks for,
-or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each request and sends it anonymously when it answers `null`.
+or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each HTTP request and sends it anonymously when it answers
+`null`. That includes each hop of a redirect and each retry of a resilience handler, so a provider that fetches from a token service should cache the token.
 Either one needs Extension:OAuth on the wiki; see [Third-party wikis](#third-party-wikis) for the cookie-based alternative.
 
 ```csharp

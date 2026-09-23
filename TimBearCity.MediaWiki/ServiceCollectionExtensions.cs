@@ -15,6 +15,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
+    /// The end of the message refusing a base address with a query string or fragment, shared by the options validator and
+    /// the <see cref="MediaWikiClient"/> constructor so both paths word it alike.
+    /// </summary>
+    internal const string NoQueryOrFragmentRequirement =
+        "must not have a query string or fragment, since every request drops both, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".";
+
+    /// <summary>
     /// The end of the message refusing a base address whose path lacks a trailing slash, shared by the options validator and
     /// the <see cref="MediaWikiClient"/> constructor so both paths word it alike.
     /// </summary>
@@ -119,6 +126,9 @@ public static class ServiceCollectionExtensions
             .Validate(
                 options => !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) || uri.AbsolutePath.EndsWith('/'),
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} {TrailingSlashRequirement}")
+            .Validate(
+                options => !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) || (uri.Query.Length == 0 && uri.Fragment.Length == 0),
+                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} {NoQueryOrFragmentRequirement}")
             .Validate(
                 options => (options.Timeout > TimeSpan.Zero && options.Timeout <= MaxTimeout) || options.Timeout == Timeout.InfiniteTimeSpan,
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero and at most {MaxTimeout}, or Timeout.InfiniteTimeSpan. A configuration value is read as d.hh:mm:ss, so \"30\" is 30 days; write 30 seconds as \"00:00:30\".")

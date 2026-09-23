@@ -161,6 +161,29 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(64 * 1024 * 1024, httpClient.MaxResponseContentBufferSize);
     }
 
+    [Theory]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/?apikey=abc")]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/#section")]
+    public async Task AddMediaWikiClient_BaseUrlWithQueryOrFragment_ThrowsOptionsValidationExceptionNamingThem(string baseUrl)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = baseUrl;
+            options.UserAgent = UserAgent;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        Assert.Contains(
+            "MediaWikiOptions.BaseUrl must not have a query string or fragment, since every request drops both, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_BaseUrlWithoutTrailingSlash_ThrowsOptionsValidationExceptionNamingTheSlash()
     {
@@ -487,6 +510,8 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     [InlineData("not-a-url", UserAgent, 30, null)]
     [InlineData("localhost:8080/w/rest.php/v1/", UserAgent, 30, null)]
     [InlineData("ftp://en.wikipedia.org/w/rest.php/v1/", UserAgent, 30, null)]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/?x=1", UserAgent, 30, null)]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/#x", UserAgent, 30, null)]
     [InlineData(BaseUrl, "", 30, null)]
     [InlineData(BaseUrl, "   ", 30, null)]
     [InlineData(BaseUrl, UserAgent, 0, null)]

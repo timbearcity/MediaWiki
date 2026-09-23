@@ -87,8 +87,9 @@ builder.Services.AddMediaWikiClient("commons", builder.Configuration.GetSection(
 The unnamed registration stays available as plain `IMediaWikiClient`, so single-wiki apps need no key.
 
 For a wiki only known at runtime, such as a base URL read from a database, construct the client directly over an
-`HttpClient` whose `BaseAddress` you have set. The address must end with `/`, as `BaseUrl` must, and the constructor throws otherwise. Nothing from
-the table above is applied on this path, so the `User-Agent` the policy asks for, and a bearer token if you need one, go on the `HttpClient` yourself:
+`HttpClient` whose `BaseAddress` you have set. The address must end with `/` and have no query string or fragment, as `BaseUrl` must, and the
+constructor throws otherwise. Nothing from the table above is applied on this path, so the `User-Agent` the policy asks for, and a bearer token if you
+need one, go on the `HttpClient` yourself:
 
 ```csharp
 httpClient.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");

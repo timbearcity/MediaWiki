@@ -161,6 +161,27 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(64 * 1024 * 1024, httpClient.MaxResponseContentBufferSize);
     }
 
+    [Fact]
+    public async Task AddMediaWikiClient_BaseUrlWithoutTrailingSlash_ThrowsOptionsValidationExceptionNamingTheSlash()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = "https://en.wikipedia.org/w/rest.php/v1";
+            options.UserAgent = UserAgent;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        Assert.Contains(
+            "MediaWikiOptions.BaseUrl must end with '/', or every request loses its last path segment, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("https://en.wikipedia.org/w/rest.php/v1/?apikey=abc")]
     [InlineData("https://en.wikipedia.org/w/rest.php/v1/#section")]
@@ -180,27 +201,6 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         Assert.Contains(
             "MediaWikiOptions.BaseUrl must not have a query string or fragment, since every request drops both, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
-            exception.Message,
-            StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task AddMediaWikiClient_BaseUrlWithoutTrailingSlash_ThrowsOptionsValidationExceptionNamingTheSlash()
-    {
-        var services = new ServiceCollection();
-
-        services.AddMediaWikiClient(options =>
-        {
-            options.BaseUrl = "https://en.wikipedia.org/w/rest.php/v1";
-            options.UserAgent = UserAgent;
-        });
-
-        await using var provider = services.BuildServiceProvider();
-
-        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
-
-        Assert.Contains(
-            "MediaWikiOptions.BaseUrl must end with '/', or every request loses its last path segment, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".",
             exception.Message,
             StringComparison.Ordinal);
     }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mime;
+using System.Reflection;
 using System.Text;
 using TimBearCity.MediaWiki.Pages;
 using Xunit;
@@ -203,10 +204,12 @@ public sealed class MediaWikiClientPageHistoryTests
     [InlineData(MediaWikiPageHistoryCountType.Edits, null, null, "edits")]
     [InlineData(MediaWikiPageHistoryCountType.Minor, null, null, "minor")]
     [InlineData(MediaWikiPageHistoryCountType.Reverted, null, null, "reverted")]
+#pragma warning disable CS0618
     [InlineData(MediaWikiPageHistoryCountType.AnonymousEdits, null, null, "anonedits")]
     [InlineData(MediaWikiPageHistoryCountType.BotEdits, null, null, "botedits")]
     [InlineData(MediaWikiPageHistoryCountType.RevertedEdits, null, null, "revertededits")]
     [InlineData(MediaWikiPageHistoryCountType.BotEdits, 1218700000L, 1218700625L, "botedits?from=1218700000&to=1218700625")]
+#pragma warning restore CS0618
     public async Task GetPageHistoryCountAsync_Arguments_RequestsMatchingPath(
         MediaWikiPageHistoryCountType type,
         long? fromRevisionId,
@@ -446,5 +449,17 @@ public sealed class MediaWikiClientPageHistoryTests
 
         Assert.Equal("type", exception.ParamName);
         Assert.Empty(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData("AnonymousEdits", nameof(MediaWikiPageHistoryCountType.Anonymous))]
+    [InlineData("BotEdits", nameof(MediaWikiPageHistoryCountType.Bot))]
+    [InlineData("RevertedEdits", nameof(MediaWikiPageHistoryCountType.Reverted))]
+    public void MediaWikiPageHistoryCountType_DeprecatedAlias_IsObsoleteNamingReplacement(string alias, string replacement)
+    {
+        var attribute = typeof(MediaWikiPageHistoryCountType).GetField(alias)?.GetCustomAttribute<ObsoleteAttribute>();
+
+        Assert.NotNull(attribute);
+        Assert.StartsWith($"Use {replacement} instead;", attribute.Message, StringComparison.Ordinal);
     }
 }

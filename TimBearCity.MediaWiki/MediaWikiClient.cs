@@ -612,9 +612,11 @@ public sealed class MediaWikiClient : IMediaWikiClient
             MediaWikiPageHistoryCountType.Edits => "edits",
             MediaWikiPageHistoryCountType.Minor => "minor",
             MediaWikiPageHistoryCountType.Reverted => "reverted",
+#pragma warning disable CS0618
             MediaWikiPageHistoryCountType.AnonymousEdits => "anonedits",
             MediaWikiPageHistoryCountType.BotEdits => "botedits",
             MediaWikiPageHistoryCountType.RevertedEdits => "revertededits",
+#pragma warning restore CS0618
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, $"Not a {nameof(MediaWikiPageHistoryCountType)} this library knows.")
         };
     }

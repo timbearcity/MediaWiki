@@ -347,9 +347,11 @@ public sealed class MediaWikiClientReadSmokeTests(ReadableWikiFixture wiki) : IC
     [InlineData(MediaWikiPageHistoryCountType.Edits)]
     [InlineData(MediaWikiPageHistoryCountType.Minor)]
     [InlineData(MediaWikiPageHistoryCountType.Reverted)]
+#pragma warning disable CS0618
     [InlineData(MediaWikiPageHistoryCountType.AnonymousEdits)]
     [InlineData(MediaWikiPageHistoryCountType.BotEdits)]
     [InlineData(MediaWikiPageHistoryCountType.RevertedEdits)]
+#pragma warning restore CS0618
     public async Task GetPageHistoryCountAsync_EachType_ReturnsCount(MediaWikiPageHistoryCountType type)
     {
         MediaWikiPageHistoryCount? count;

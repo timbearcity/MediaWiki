@@ -30,11 +30,14 @@ public enum MediaWikiPageHistoryCountType
     Reverted,
 
     /// <summary>The name the wiki accepted for <see cref="Anonymous"/> before it was renamed; kept as a deprecated alias.</summary>
+    [Obsolete("Use Anonymous instead; the wiki counts anonedits as an alias for anonymous.")]
     AnonymousEdits,
 
     /// <summary>The name the wiki accepted for <see cref="Bot"/> before it was renamed; kept as a deprecated alias.</summary>
+    [Obsolete("Use Bot instead; the wiki counts botedits as an alias for bot.")]
     BotEdits,
 
     /// <summary>The name the wiki accepted for <see cref="Reverted"/> before it was renamed; kept as a deprecated alias.</summary>
+    [Obsolete("Use Reverted instead; the wiki counts revertededits as an alias for reverted.")]
     RevertedEdits
 }

@@ -19,6 +19,12 @@ compares each release against the previous one, so a change to the contract cann
   `/w/rest.php/page/Earth` rather than `/w/rest.php/v1/page/Earth`. Both paths now refuse such an address: the constructor throws `ArgumentException`
   saying so. Add the trailing slash to `BaseUrl` when upgrading.
 
+### Deprecated
+
+- `MediaWikiPageHistoryCountType.AnonymousEdits`, `BotEdits` and `RevertedEdits` are now marked `[Obsolete]`, pointing at `Anonymous`, `Bot` and
+  `Reverted` ([#47](https://github.com/timbearcity/MediaWiki/issues/47)). The wiki treats the old names as aliases and returns the same count, so
+  requests do not change, but a project that builds with warnings as errors now fails on CS0618 where it uses them.
+
 ### Fixed
 
 - `GetPageHistoryCountAsync` no longer fails with `400 Bad Request` for a key the wiki normalizes, such as `albert_Einstein`, `talk:Earth` or one

@@ -210,6 +210,9 @@ These mirror the page representations, and share their metadata on `MediaWikiRev
 A comparison reports each line's `Type` as a `MediaWikiDiffType`, marks up the changed stretches of a `Changed` line through `HighlightRanges`, and links the
 two halves of a moved paragraph through `MoveInfo`.
 
+`MediaWikiDiffType`, `MediaWikiDiffHighlightType` and `MediaWikiDiffMoveDirection` take the numbers the wiki sends as they are, so a wiki whose diff engine
+gains a new kind can hand back a value outside them; give a `switch` over one a default arm.
+
 ### Search
 
 | Method              | Endpoint       | Returns                                                                               |

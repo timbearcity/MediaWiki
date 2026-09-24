@@ -1,6 +1,10 @@
 namespace TimBearCity.MediaWiki.Revisions;
 
 /// <summary>What a line in a revision comparison represents.</summary>
+/// <remarks>
+/// The value is bound from the number the wiki sends, without checking it against the members here, so a wiki whose wikidiff2 adds a line type passes
+/// it through as a value outside them. Give a <see langword="switch"/> over it a default arm.
+/// </remarks>
 public enum MediaWikiDiffType
 {
     /// <summary>Unchanged, included as context around a change; up to two such lines surround each one.</summary>

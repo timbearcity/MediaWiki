@@ -1,7 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Net.Mime;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
@@ -14,27 +11,8 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>Registration helpers for <see cref="IMediaWikiClient"/>.</summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// The end of the message refusing a base address with a query string or fragment, shared by the options validator and
-    /// the <see cref="MediaWikiClient"/> constructor so both paths word it alike.
-    /// </summary>
-    internal const string NoQueryOrFragmentRequirement =
-        "must not have a query string or fragment, since every request drops both, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".";
-
-    /// <summary>
-    /// The end of the message refusing a base address whose path lacks a trailing slash, shared by the options validator and
-    /// the <see cref="MediaWikiClient"/> constructor so both paths word it alike.
-    /// </summary>
-    internal const string TrailingSlashRequirement =
-        "must end with '/', or every request loses its last path segment, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".";
-
     /// <summary>The options name and service key used by the unnamed, single-wiki registration.</summary>
     private static readonly string DefaultName = Options.Options.DefaultName;
-
-    private static readonly string LibraryUserAgent = BuildLibraryUserAgent();
-
-    /// <summary>The most <see cref="HttpClient.Timeout"/> accepts; a larger value throws when it is assigned.</summary>
-    private static readonly TimeSpan MaxTimeout = TimeSpan.FromMilliseconds(int.MaxValue);
 
     /// <summary>
     /// Registers <see cref="IMediaWikiClient"/> as a typed <see cref="HttpClient"/>, configured in code.
@@ -119,29 +97,8 @@ public static class ServiceCollectionExtensions
         var optionsBuilder = services.AddOptions<MediaWikiOptions>(name);
         configure(optionsBuilder);
 
-        optionsBuilder
-            .Validate(
-                options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} must be an absolute http or https URL, e.g. \"https://en.wikipedia.org/w/rest.php/v1/\".")
-            .Validate(
-                options => !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) || uri.AbsolutePath.EndsWith('/'),
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} {TrailingSlashRequirement}")
-            .Validate(
-                options => !Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) || (uri.Query.Length == 0 && uri.Fragment.Length == 0),
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.BaseUrl)}{Describe(name)} {NoQueryOrFragmentRequirement}")
-            .Validate(
-                options => (options.Timeout > TimeSpan.Zero && options.Timeout <= MaxTimeout) || options.Timeout == Timeout.InfiniteTimeSpan,
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.Timeout)}{Describe(name)} must be greater than zero and at most {MaxTimeout}, or Timeout.InfiniteTimeSpan. A configuration value is read as d.hh:mm:ss, so \"30\" is 30 days; write 30 seconds as \"00:00:30\".")
-            .Validate(
-                options => options.MaxResponseSize is null or > 0,
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.MaxResponseSize)}{Describe(name)} must be greater than zero.")
-            .Validate(
-                options => !string.IsNullOrWhiteSpace(options.UserAgent),
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.UserAgent)}{Describe(name)} must be provided as per the MediaWiki API guidelines.")
-            .Validate(
-                options => string.IsNullOrWhiteSpace(options.AccessToken) || options.AccessTokenProvider is null,
-                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.AccessToken)} and {nameof(MediaWikiOptions.AccessTokenProvider)}{Describe(name)} cannot both be set.")
-            .ValidateOnStart();
+        optionsBuilder.ValidateOnStart();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<MediaWikiOptions>>(new MediaWikiOptionsValidator()));
 
         IHttpClientBuilder builder;
 
@@ -162,23 +119,9 @@ public static class ServiceCollectionExtensions
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter>(new RedirectHandlerBuilderFilter()));
 
-        // Added here rather than with AddHttpMessageHandler so that a wiki without a token gets no token handler at all.
+        // Added here rather than with AddHttpMessageHandler, since which handlers a wiki gets depends on its options.
         return builder.ConfigureAdditionalHttpMessageHandlers((handlers, serviceProvider) =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name);
-
-            // Ahead of the token handler, so that the token is set on each hop of a redirect and not just the first request.
-            handlers.Add(new RedirectHandler());
-
-            if (options.AccessTokenProvider is { } accessTokenProvider)
-            {
-                handlers.Add(new AccessTokenHandler(accessTokenProvider));
-            }
-            else if (!string.IsNullOrWhiteSpace(options.AccessToken))
-            {
-                handlers.Add(new AccessTokenHandler(_ => ValueTask.FromResult<string?>(options.AccessToken)));
-            }
-        });
+            MediaWikiPipeline.AddHandlers(handlers, serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name)));
     }
 
     /// <summary>Copies the values present in the section onto the options, leaving absent keys at their default.</summary>
@@ -223,21 +166,6 @@ public static class ServiceCollectionExtensions
         return $"{MediaWikiOptions.Position}:{name}";
     }
 
-    private static string BuildLibraryUserAgent()
-    {
-        var assembly = typeof(MediaWikiClient).Assembly;
-        var version = GetVersion(assembly);
-
-        // Informational versions may carry source-control metadata ("1.0.0+abc1234"), which is not a valid header token.
-        var plusIndex = version.IndexOf('+', StringComparison.Ordinal);
-        if (plusIndex >= 0)
-        {
-            version = version[..plusIndex];
-        }
-
-        return $"{assembly.GetName().Name}/{version}";
-    }
-
     /// <summary>
     /// Binds the options to a configuration section, and keeps <see cref="IOptionsMonitor{TOptions}"/> reloading as
     /// that section changes, the way <c>OptionsBuilder.Bind</c> would.
@@ -260,51 +188,7 @@ public static class ServiceCollectionExtensions
     private static Action<IServiceProvider, HttpClient> ConfigureHttpClient(string name)
     {
         return (serviceProvider, client) =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name);
-
-            client.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
-            client.Timeout = options.Timeout;
-
-            if (options.MaxResponseSize is { } maxResponseSize)
-            {
-                client.MaxResponseContentBufferSize = maxResponseSize;
-            }
-
-            client.DefaultRequestHeaders.Accept.ParseAdd(MediaTypeNames.Application.Json);
-
-            try
-            {
-                client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
-            }
-            catch (FormatException exception)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.UserAgent)}{Describe(name)} is not a valid User-Agent header. Expected e.g. \"MyApp/1.0 (https://example.com; contact@example.com)\".",
-                    exception);
-            }
-
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(LibraryUserAgent);
-        };
-    }
-
-    /// <summary>Qualifies a message with the wiki it concerns, since more than one can be registered.</summary>
-    private static string Describe(string name)
-    {
-        return name == DefaultName ? string.Empty : $" for wiki \"{name}\"";
-    }
-
-    /// <summary>This assembly's version, for the library half of the User-Agent header.</summary>
-    /// <remarks>
-    /// The SDK stamps every build with an informational version, so only a hand-assembled build reaches the
-    /// fallbacks; there is no way to hand this method such an assembly from a test, hence the exclusion.
-    /// </remarks>
-    [ExcludeFromCodeCoverage(Justification = "The fallbacks cover assemblies the SDK did not stamp, which no test can produce.")]
-    private static string GetVersion(Assembly assembly)
-    {
-        return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-               ?? assembly.GetName().Version?.ToString()
-               ?? "0.0.0";
+            MediaWikiPipeline.ConfigureHttpClient(client, serviceProvider.GetRequiredService<IOptionsMonitor<MediaWikiOptions>>().Get(name));
     }
 
     private static bool IsMediaWikiClient(ServiceDescriptor descriptor, string name)

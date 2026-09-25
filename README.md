@@ -21,7 +21,7 @@ configuration is bound by hand rather than through reflection.
 
 `AddMediaWikiClient` registers `IMediaWikiClient` as a typed `HttpClient`. A `User-Agent` is
 [required by the MediaWiki API guidelines](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy); the options are validated at
-startup, and a `UserAgent` that is not a well-formed header is refused the first time the client is built.
+startup, including whether `UserAgent` is a well-formed header.
 
 ```csharp
 builder.Services.AddMediaWikiClient(options =>
@@ -86,10 +86,29 @@ builder.Services.AddMediaWikiClient("commons", builder.Configuration.GetSection(
 
 The unnamed registration stays available as plain `IMediaWikiClient`, so single-wiki apps need no key.
 
-For a wiki only known at runtime, such as a base URL read from a database, construct the client directly over an
-`HttpClient` whose `BaseAddress` you have set. The address must end with `/` and have no query string or fragment, as `BaseUrl` must, and the
-constructor throws otherwise. Nothing from the table above is applied on this path, so the `User-Agent` the policy asks for, and a bearer token if you
-need one, go on the `HttpClient` yourself:
+## A wiki only known at runtime
+
+For a wiki whose base URL comes from somewhere a registration cannot reach, such as a database, construct the client from `MediaWikiOptions`. It gets the
+same checks, headers and redirect handling as a registered one, and throws `ArgumentException` listing every option that breaks a rule:
+
+```csharp
+var client = new MediaWikiClient(new MediaWikiOptions
+{
+    BaseUrl = baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/",
+    UserAgent = "MyApp/1.0 (https://example.com; contact@example.com)",
+    AccessToken = accessToken
+});
+```
+
+The client is not disposable, and holds its connections for as long as it lives, so build one per wiki and keep it: as a singleton, or in a
+`ConcurrentDictionary` keyed by base URL. Its connections are replaced every two minutes, so a client kept for the life of the app still sees DNS changes.
+The options are read once, when the client is built; to rotate a token, set `AccessTokenProvider`. A second argument replaces the primary handler, e.g. one
+with a proxy; an `HttpClientHandler` or `SocketsHttpHandler` there has its `AllowAutoRedirect` turned off, since the client follows redirects itself.
+
+To build the handler pipeline yourself, pass an `HttpClient` instead. Its `BaseAddress` must be an `http` or `https` URL that ends with `/` and has no query
+string or fragment, and it must carry a `User-Agent`; the constructor throws otherwise. Nothing from `MediaWikiOptions` is applied on this path, and
+redirects are the primary handler's: `HttpClientHandler` drops the `Authorization` header on every hop, so an authenticated request for a title the wiki
+normalizes continues anonymously.
 
 ```csharp
 httpClient.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");

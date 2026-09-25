@@ -19,6 +19,9 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     /// <summary>The base address used when a test does not care which wiki it is talking to.</summary>
     public const string DefaultBaseAddress = "https://wiki.example/w/rest.php/v1/";
 
+    /// <summary>The User-Agent <see cref="CreateClient"/> sends.</summary>
+    public const string UserAgent = "MyApp/1.0 (https://example.com; contact@example.com)";
+
     private readonly List<Hop> _hops = [];
     private readonly List<string?> _requestBodies = [];
     private readonly List<HttpRequestMessage> _requests = [];
@@ -226,16 +229,20 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
         return new HttpMessageHandlerStub((_, _) => Task.FromException<HttpResponseMessage>(exception));
     }
 
-    /// <summary>An <see cref="HttpClient"/> over this handler, with the base address <see cref="MediaWikiClient"/> requires.</summary>
+    /// <summary>An <see cref="HttpClient"/> over this handler, with the base address and User-Agent <see cref="MediaWikiClient"/> requires.</summary>
     /// <param name="baseAddress">The wiki's REST endpoint.</param>
     /// <param name="timeout">The client timeout; short by default, so a blocking handler does not stall the suite.</param>
     public HttpClient CreateClient(string baseAddress = DefaultBaseAddress, TimeSpan? timeout = null)
     {
-        return new HttpClient(this, false)
+        var httpClient = new HttpClient(this, false)
         {
             BaseAddress = new Uri(baseAddress, UriKind.Absolute),
             Timeout = timeout ?? TimeSpan.FromSeconds(30)
         };
+
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+
+        return httpClient;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

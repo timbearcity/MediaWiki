@@ -11,6 +11,13 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Added
+
+- `new MediaWikiClient(options)` builds a client from `MediaWikiOptions` for a wiki only known at runtime, with the checks, headers and redirect handling
+  `AddMediaWikiClient` gives a registered one ([#51](https://github.com/timbearcity/MediaWiki/issues/51)). Over a plain `HttpClient`, redirects are the
+  primary handler's, and it drops the bearer token on the `301` MediaWiki answers a title it normalizes with. An optional second argument replaces the
+  primary handler. The client is not disposable, so keep one per wiki rather than one per request.
+
 ### Changed
 
 - `MediaWikiOptions.BaseUrl` must now end with `/`, and `ValidateOnStart` refuses one that does not, such as
@@ -18,6 +25,12 @@ compares each release against the previous one, so a change to the contract cann
   while `new MediaWikiClient(httpClient)` accepted a `BaseAddress` without one and then sent every request one path segment short, to
   `/w/rest.php/page/Earth` rather than `/w/rest.php/v1/page/Earth`. Both paths now refuse such an address: the constructor throws `ArgumentException`
   saying so. Add the trailing slash to `BaseUrl` when upgrading.
+- `new MediaWikiClient(httpClient)` now throws `ArgumentException` for a `BaseAddress` that is not `http` or `https`, and for an `HttpClient` whose
+  `DefaultRequestHeaders` carry no `User-Agent` ([#51](https://github.com/timbearcity/MediaWiki/issues/51)). `AddMediaWikiClient` already required both;
+  Wikimedia wikis refuse a request without a `User-Agent` with `403`, which used to surface on the first call. Set the header on the `HttpClient` when
+  upgrading, or build the client from `MediaWikiOptions`.
+- A `MediaWikiOptions.UserAgent` that is not a well-formed header is now refused by `ValidateOnStart` with `OptionsValidationException`, rather than
+  with `InvalidOperationException` the first time the client is built ([#51](https://github.com/timbearcity/MediaWiki/issues/51)).
 
 ### Deprecated
 

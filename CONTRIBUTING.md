@@ -83,3 +83,8 @@ Merge commits, reverts and the `fixup!` and `squash!` commits of an interactive 
 The check is `.github/scripts/check-commit-message.sh`. The hook runs it on the message being committed, and the `Commit messages` job in
 `.github/workflows/ci.yml` runs it on every commit a push or a pull request brings, so a message that slips past a missing hook still fails the build. Both
 use the same script, so they cannot disagree.
+
+## Releasing
+
+The steps for cutting a release, from the changelog to moving the package validation baseline afterwards, are in
+[RELEASING.md](https://github.com/timbearcity/MediaWiki/blob/main/RELEASING.md).

@@ -8,8 +8,11 @@
 
     <PropertyGroup Label="API contract">
         <EnablePackageValidation>true</EnablePackageValidation>
-        <!-- The latest version on NuGet; bumped as part of each release. -->
-        <PackageValidationBaselineVersion>0.2.0</PackageValidationBaselineVersion>
+        <!--
+          The latest version on NuGet, bumped once a release is published so that every pull request is checked against it. The bump also
+          deletes CompatibilitySuppressions.xml, whose suppressions cover breaks the new baseline already ships.
+        -->
+        <PackageValidationBaselineVersion>0.3.0</PackageValidationBaselineVersion>
     </PropertyGroup>
 
     <ItemGroup>

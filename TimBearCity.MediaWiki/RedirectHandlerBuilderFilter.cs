@@ -26,15 +26,7 @@ internal sealed class RedirectHandlerBuilderFilter : IHttpMessageHandlerBuilderF
                 return;
             }
 
-            switch (builder.PrimaryHandler)
-            {
-                case HttpClientHandler handler:
-                    handler.AllowAutoRedirect = false;
-                    break;
-                case SocketsHttpHandler handler:
-                    handler.AllowAutoRedirect = false;
-                    break;
-            }
+            MediaWikiPipeline.DisableAutoRedirect(builder.PrimaryHandler);
         };
     }
 }

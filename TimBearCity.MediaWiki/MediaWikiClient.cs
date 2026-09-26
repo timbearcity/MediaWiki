@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
@@ -9,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using TimBearCity.MediaWiki.Files;
 using TimBearCity.MediaWiki.Pages;
 using TimBearCity.MediaWiki.Revisions;
@@ -20,8 +22,9 @@ namespace TimBearCity.MediaWiki;
 
 /// <inheritdoc cref="IMediaWikiClient"/>
 /// <remarks>
-/// Registered as a typed <see cref="HttpClient"/> by <see cref="ServiceCollectionExtensions"/>,
-/// which supplies the base address, timeout and headers from <see cref="MediaWikiOptions"/>.
+/// Registered as a typed <see cref="HttpClient"/> by <see cref="ServiceCollectionExtensions"/>, which supplies the base
+/// address, timeout, headers and handlers from <see cref="MediaWikiOptions"/>. For a wiki only known at runtime,
+/// <see cref="MediaWikiClient(MediaWikiOptions, HttpMessageHandler?)"/> builds the same client without a container.
 /// </remarks>
 public sealed class MediaWikiClient : IMediaWikiClient
 {
@@ -111,13 +114,59 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// <summary>Asked for by the endpoint that answers with wikitext; see <see cref="SendAsync"/>.</summary>
     private static readonly MediaTypeWithQualityHeaderValue PlainTextAccept = new(MediaTypeNames.Text.Plain);
 
+    /// <summary>
+    /// How long the default primary handler keeps a connection, the same as <c>IHttpClientFactory</c> keeps a handler, so
+    /// that a client kept for the life of the application still sees DNS changes.
+    /// </summary>
+    private static readonly TimeSpan PooledConnectionLifetime = TimeSpan.FromMinutes(2);
+
     private readonly HttpClient _httpClient;
 
-    /// <summary>Creates a client over an <see cref="HttpClient"/> that already has its base address configured.</summary>
+    /// <summary>
+    /// Creates a client for the wiki that <paramref name="options"/> describe, with the checks, headers and handlers
+    /// <c>AddMediaWikiClient</c> gives a registered one: redirects keep the bearer token while they stay on the wiki.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The client is not disposable: it holds its connections for as long as it lives, so create one per wiki and keep it
+    /// for the life of the application, as a singleton or in a dictionary keyed by base URL. A client per request would
+    /// open new connections each time and leave the old ones to the garbage collector. The default primary handler
+    /// replaces its connections every two minutes, so a client kept that long still sees DNS changes.
+    /// </para>
+    /// <para>
+    /// The options are read once, here. A later change to them does not reach the client; to rotate a token, set
+    /// <see cref="MediaWikiOptions.AccessTokenProvider"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="options">The wiki to talk to, checked as <c>AddMediaWikiClient</c> checks them.</param>
+    /// <param name="primaryHandler">
+    /// The handler that sends requests, e.g. one with a proxy or client certificate; a <see cref="SocketsHttpHandler"/> when
+    /// omitted. An <see cref="HttpClientHandler"/> or <see cref="SocketsHttpHandler"/> has its <c>AllowAutoRedirect</c>
+    /// turned off, since the client follows redirects itself. The client never disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException"><paramref name="options"/> break a rule of <see cref="MediaWikiOptions"/>; the message lists each one.</exception>
+    /// <exception cref="InvalidOperationException"><paramref name="primaryHandler"/> follows redirects and has already sent a request.</exception>
+    /// <exception cref="PlatformNotSupportedException">
+    /// <paramref name="primaryHandler"/> is omitted on a platform without <see cref="SocketsHttpHandler"/>, such as a browser.
+    /// </exception>
+    public MediaWikiClient(MediaWikiOptions options, HttpMessageHandler? primaryHandler = null)
+        : this(CreateHttpClient(options, primaryHandler))
+    {
+    }
+
+    /// <summary>Creates a client over an <see cref="HttpClient"/> that already has its base address and User-Agent configured.</summary>
+    /// <remarks>
+    /// For a caller who builds the handler pipeline. Nothing from <see cref="MediaWikiOptions"/> is added, and redirects
+    /// are left to the primary handler, which drops the <c>Authorization</c> header on every hop: an authenticated
+    /// request for a title the wiki normalizes, which it answers with a <c>301</c>, then continues anonymously.
+    /// <see cref="MediaWikiClient(MediaWikiOptions, HttpMessageHandler?)"/> follows redirects the way
+    /// <c>AddMediaWikiClient</c> does, keeping the token while they stay on the wiki.
+    /// </remarks>
     /// <param name="httpClient">
-    /// The configured client; its <see cref="HttpClient.BaseAddress"/> must be set, and its path must end with <c>/</c>, since
-    /// request URIs are relative and resolving one against <c>.../rest.php/v1</c> drops the <c>v1</c>. For the same reason it must
-    /// have no query string or fragment, which every request would drop.
+    /// The configured client. Its <see cref="HttpClient.BaseAddress"/> must be an http or https URL whose path ends with
+    /// <c>/</c>, since request URIs are relative and resolving one against <c>.../rest.php/v1</c> drops the <c>v1</c>. For the
+    /// same reason it must have no query string or fragment, which every request would drop. Its default headers must
+    /// carry a <c>User-Agent</c>, which Wikimedia wikis refuse requests without.
     /// </param>
     public MediaWikiClient(HttpClient httpClient)
     {
@@ -129,15 +178,29 @@ public sealed class MediaWikiClient : IMediaWikiClient
                                         $"Register the client with {nameof(ServiceCollectionExtensions.AddMediaWikiClient)}.", nameof(httpClient));
         }
 
+        if (httpClient.BaseAddress.Scheme != Uri.UriSchemeHttp && httpClient.BaseAddress.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {MediaWikiOptionsValidator.HttpSchemeRequirement}",
+                nameof(httpClient));
+        }
+
         if (!httpClient.BaseAddress.AbsolutePath.EndsWith('/'))
         {
-            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {ServiceCollectionExtensions.TrailingSlashRequirement}",
+            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {MediaWikiOptionsValidator.TrailingSlashRequirement}",
                 nameof(httpClient));
         }
 
         if (httpClient.BaseAddress.Query.Length > 0 || httpClient.BaseAddress.Fragment.Length > 0)
         {
-            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {ServiceCollectionExtensions.NoQueryOrFragmentRequirement}",
+            throw new ArgumentException($"{nameof(HttpClient)}.{nameof(HttpClient.BaseAddress)} {MediaWikiOptionsValidator.NoQueryOrFragmentRequirement}",
+                nameof(httpClient));
+        }
+
+        // Read without validation, so that a value added with TryAddWithoutValidation counts as well.
+        if (!httpClient.DefaultRequestHeaders.NonValidated.Contains("User-Agent"))
+        {
+            throw new ArgumentException(
+                $"{nameof(HttpClient)}.{nameof(HttpClient.DefaultRequestHeaders)}.{nameof(HttpRequestHeaders.UserAgent)} {MediaWikiOptionsValidator.UserAgentRequirement}",
                 nameof(httpClient));
         }
 
@@ -541,6 +604,40 @@ public sealed class MediaWikiClient : IMediaWikiClient
             $"The request to '{requestUri}' failed with status {(int)response.StatusCode}{(reason is null ? null : $" {reason}")}.{(detail is null ? null : $" {detail}")}{(hint is null ? null : $" {hint}")}");
 
         return Trace(new MediaWikiException(message, response.StatusCode, error?.ErrorKey, GetRetryAfter(response)));
+    }
+
+    /// <summary>The <see cref="HttpClient"/> behind <see cref="MediaWikiClient(MediaWikiOptions, HttpMessageHandler?)"/>.</summary>
+    /// <exception cref="ArgumentException"><paramref name="options"/> break a rule of <see cref="MediaWikiOptions"/>.</exception>
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The client keeps the pipeline for as long as it lives.")]
+    private static HttpClient CreateHttpClient(MediaWikiOptions options, HttpMessageHandler? primaryHandler)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var validation = new MediaWikiOptionsValidator().Validate(Options.DefaultName, options);
+
+        if (validation.Failed)
+        {
+            throw new ArgumentException(validation.FailureMessage, nameof(options));
+        }
+
+        var handler = primaryHandler ?? new SocketsHttpHandler { PooledConnectionLifetime = PooledConnectionLifetime };
+
+        MediaWikiPipeline.DisableAutoRedirect(handler);
+
+        var handlers = new List<DelegatingHandler>();
+        MediaWikiPipeline.AddHandlers(handlers, options);
+
+        // The first handler is the outermost, so the chain is linked from the primary handler up.
+        for (var i = handlers.Count - 1; i >= 0; i--)
+        {
+            handlers[i].InnerHandler = handler;
+            handler = handlers[i];
+        }
+
+        var httpClient = new HttpClient(handler);
+        MediaWikiPipeline.ConfigureHttpClient(httpClient, options);
+
+        return httpClient;
     }
 
     /// <summary>Throws a <see cref="MediaWikiException"/> describing the response unless it succeeded.</summary>

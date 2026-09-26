@@ -542,7 +542,7 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
-    public async Task AddMediaWikiClient_MalformedUserAgent_ThrowsInvalidOperationException()
+    public async Task AddMediaWikiClient_MalformedUserAgent_ThrowsOptionsValidationException()
     {
         var services = new ServiceCollection();
 
@@ -554,9 +554,10 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         await using var provider = services.BuildServiceProvider();
 
-        var exception = Assert.Throws<InvalidOperationException>(provider.GetRequiredService<IMediaWikiClient>);
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
 
-        Assert.Contains(nameof(MediaWikiOptions.UserAgent), exception.Message, StringComparison.Ordinal);
+        // Found by ValidateOnStart, rather than when the first client is created.
+        Assert.Contains("MediaWikiOptions.UserAgent is not a valid User-Agent header.", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

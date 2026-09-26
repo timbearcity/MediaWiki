@@ -3,22 +3,36 @@
         <File Path=".editorconfig" />
         <File Path=".gitattributes" />
         <File Path=".gitignore" />
+        <File Path=".gitmessage" />
         <File Path="CHANGELOG.md" />
         <File Path="CONTRIBUTING.md" />
         <File Path="Directory.Build.props" />
         <File Path="global.json" />
         <File Path="LICENSE" />
         <File Path="README.md" />
+        <File Path="RELEASING.md" />
         <File Path="SECURITY.md" />
     </Folder>
     <Folder Name="/Solution Items/.config/">
         <File Path=".config/dotnet-tools.json" />
     </Folder>
+    <Folder Name="/Solution Items/.githooks/">
+        <File Path=".githooks/commit-msg" />
+    </Folder>
     <Folder Name="/Solution Items/.github/">
         <File Path=".github/dependabot.yml" />
+        <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+    </Folder>
+    <Folder Name="/Solution Items/.github/ISSUE_TEMPLATE/">
+        <File Path=".github/ISSUE_TEMPLATE/bug_report.md" />
+        <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+        <File Path=".github/ISSUE_TEMPLATE/feature_request.md" />
     </Folder>
     <Folder Name="/Solution Items/.github/scripts/">
+        <File Path=".github/scripts/changelog-section.py" />
+        <File Path=".github/scripts/check-commit-message.sh" />
         <File Path=".github/scripts/check-coverage.py" />
+        <File Path=".github/scripts/mark-shipped.ps1" />
         <File Path=".github/scripts/start-throwaway-wiki.sh" />
     </Folder>
     <Folder Name="/Solution Items/.github/workflows/">
@@ -33,6 +47,9 @@
     </Folder>
     <Folder Name="/Solution Items/docs/api/">
         <File Path="docs/api/index.md" />
+    </Folder>
+    <Folder Name="/Solution Items/docs/template/public/">
+        <File Path="docs/template/public/main.js" />
     </Folder>
     <Project Path="TimBearCity.MediaWiki/TimBearCity.MediaWiki.csproj" />
     <Project Path="TimBearCity.MediaWiki.Tests/TimBearCity.MediaWiki.Tests.csproj" />

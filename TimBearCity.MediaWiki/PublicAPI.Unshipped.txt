@@ -1,2 +1,1 @@
 #nullable enable
-TimBearCity.MediaWiki.MediaWikiClient.MediaWikiClient(TimBearCity.MediaWiki.MediaWikiOptions! options, System.Net.Http.HttpMessageHandler? primaryHandler = null) -> void

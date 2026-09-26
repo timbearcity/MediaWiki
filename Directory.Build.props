@@ -31,7 +31,7 @@
     </PropertyGroup>
 
     <PropertyGroup Label="Package defaults">
-        <Version>0.2.0</Version>
+        <Version>0.3.0</Version>
         <Authors>Tim Tissari Bjornstedt</Authors>
         <Company>Tim Tissari Bjornstedt</Company>
         <Copyright>Copyright (c) Tim Tissari Bjornstedt</Copyright>

@@ -410,6 +410,9 @@ VisualEditor's edit-stashing workflow rather than a general client. The `redirec
 MediaWiki also serves a few REST modules outside `/v1/`, none of them meant for a client like this one: `site/v1` (XML sitemaps for crawlers), `specs/v0`
 (the API's own OpenAPI descriptions) and `fragments/v0-internal` (HTML fragments for the skin).
 
+Wikimedia's wikis also answer at `/api/rest_v1/` (page summaries, random pages and more), but that is Wikimedia's own REST API rather than MediaWiki's: no
+other wiki has it, and this library does not cover it.
+
 Deleting, moving and undeleting pages, and logging in, have no REST equivalent at all: they live in the action API (`/w/api.php`), which this library does not
 cover.
 

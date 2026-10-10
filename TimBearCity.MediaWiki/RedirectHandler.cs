@@ -108,7 +108,7 @@ internal sealed class RedirectHandler : DelegatingHandler
 
             if (!isSameOrigin)
             {
-                // Cleared here, and not left to AccessTokenHandler, so that a header the caller set on the HttpClient goes as well.
+                // Cleared here, and not left to AccessTokenHandler, so that a header set on the HttpClient, a static AccessToken among them, goes as well.
                 hop.Headers.Authorization = null;
                 hop.Headers.Remove("Cookie");
                 hop.Options.Set(IsAnonymous, true);

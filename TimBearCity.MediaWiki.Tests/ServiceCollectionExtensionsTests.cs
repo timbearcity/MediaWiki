@@ -164,6 +164,28 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_AccessTokenWithCallerHeader_SendsTheCallerHeader()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+            {
+                options.BaseUrl = BaseUrl;
+                options.UserAgent = UserAgent;
+                options.AccessToken = "secret-token";
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler)
+            .ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "caller-token"));
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        // The static token is set on the HttpClient, where the caller's configuration runs after the library's.
+        Assert.Equal("caller-token", _wikipediaHandler.Request.Headers.Authorization?.Parameter);
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_AppliesTimeoutAndMaxResponseSizeToHttpClient()
     {
         var services = new ServiceCollection();
@@ -364,10 +386,39 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
 
-        // Without a token in the options there is no AccessTokenHandler, so the redirect handler itself has to clear what the caller set.
+        // Without a provider in the options there is no AccessTokenHandler, so the redirect handler itself has to clear what the caller set.
         Assert.Equal([$"{BaseUrl}page/{EinsteinPage.Key}", location], handler.Hops.Select(hop => hop.Uri));
         Assert.Equal(["caller-token", null], handler.Hops.Select(hop => hop.Token));
         Assert.Equal(["session=secret", null], handler.Hops.Select(hop => hop.Cookie));
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_CrossOriginRedirectWithProvider_SendsTheHopAnonymouslyWithoutAsking()
+    {
+        const string location = "https://other.example.net/w/rest.php/v1/page/Albert_Einstein";
+        var asked = 0;
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.TemporaryRedirect, location, EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ =>
+            {
+                asked++;
+                return ValueTask.FromResult<string?>("secret-token");
+            };
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        // The token handler honors the redirect handler's mark: a hop off the wiki is not a request the provider is asked about.
+        Assert.Equal(["secret-token", null], handler.Hops.Select(hop => hop.Token));
+        Assert.Equal(1, asked);
     }
 
     [Fact]
@@ -1080,6 +1131,38 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_SectionReloadedWithAnotherWiki_SendsEachClientsTokenToItsOwnWiki()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            [$"{MediaWikiOptions.Position}:BaseUrl"] = BaseUrl,
+            [$"{MediaWikiOptions.Position}:UserAgent"] = UserAgent,
+            [$"{MediaWikiOptions.Position}:AccessToken"] = "wikipedia-token"
+        });
+
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(configuration.GetSection(MediaWikiOptions.Position))
+            .ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+        var keptClient = provider.GetRequiredService<IMediaWikiClient>();
+
+        configuration[$"{MediaWikiOptions.Position}:BaseUrl"] = CommonsBaseUrl;
+        configuration[$"{MediaWikiOptions.Position}:AccessToken"] = "commons-token";
+        ((IConfigurationRoot)configuration).Reload();
+
+        // A client kept across the reload stays on the values it was built with; one resolved after it, as a transient or
+        // scoped consumer would, takes the new ones. Either way the token and the wiki come from the same reading.
+        await keptClient.SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            ["en.wikipedia.org wikipedia-token", "commons.wikimedia.org commons-token"],
+            _wikipediaHandler.Hops.Select(hop => $"{new Uri(hop.Uri).Host} {hop.Token}"));
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_SectionTimeoutInWholeDays_ThrowsOptionsValidationExceptionNamingTheFormat()
     {
         // "30" is 30 days to TimeSpan.Parse, above what HttpClient accepts, and the likely intent was 30 seconds.
@@ -1120,6 +1203,37 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         using var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(IMediaWikiClient));
 
         Assert.Equal(Timeout.InfiniteTimeSpan, httpClient.Timeout);
+    }
+
+    [Theory]
+    [InlineData("old-token", "new-token")]
+    [InlineData("old-token", null)]
+    [InlineData(null, "new-token")]
+    public async Task AddMediaWikiClient_SectionTokenReloaded_ReachesTheNextClient(string? before, string? after)
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            [$"{MediaWikiOptions.Position}:BaseUrl"] = BaseUrl,
+            [$"{MediaWikiOptions.Position}:UserAgent"] = UserAgent,
+            [$"{MediaWikiOptions.Position}:AccessToken"] = before
+        });
+
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(configuration.GetSection(MediaWikiOptions.Position))
+            .ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        configuration[$"{MediaWikiOptions.Position}:AccessToken"] = after;
+        ((IConfigurationRoot)configuration).Reload();
+
+        // The factory still hands out the pipeline it built before the reload, so the token must not live there.
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        Assert.Equal([before, after], _wikipediaHandler.Hops.Select(hop => hop.Token));
     }
 
     [Theory]

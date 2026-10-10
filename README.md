@@ -58,6 +58,10 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 Each registration binds one client to one wiki: `BaseUrl` is the `HttpClient` base address and `AccessToken` is only valid on that wiki. Registering the same
 wiki twice throws from the second `AddMediaWikiClient` call.
 
+A bound section is read again when the configuration reloads, as `appsettings.json` does when the file changes. A client resolved after the reload takes
+every value from the new reading, `BaseUrl` and `AccessToken` together, while one resolved before it, such as one a singleton holds, keeps the values it was
+built with.
+
 ## Multiple wikis
 
 Pass a name to register further wikis. Each gets its own options, `HttpClient` and handler pipeline, and is resolved as a keyed service.

@@ -8,7 +8,10 @@ public sealed class MediaWikiOptions
 
     /// <summary>
     /// Optional OAuth2 / Personal Access Token for authenticated requests. Sent as a bearer token on every request,
-    /// so it suits a token that does not expire. Cannot be combined with <see cref="AccessTokenProvider"/>.
+    /// so it suits a token that does not expire. It is set on the <see cref="HttpClient"/> along with
+    /// <see cref="BaseUrl"/>, so a client sends the token read with its own base address, and an <c>Authorization</c>
+    /// header set on the <see cref="HttpClient"/> afterwards replaces it. Cannot be combined with
+    /// <see cref="AccessTokenProvider"/>.
     /// </summary>
     public string? AccessToken { get; set; }
 

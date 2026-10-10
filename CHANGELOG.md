@@ -19,6 +19,12 @@ compares each release against the previous one, so a change to the contract cann
   had a new one. A token that expired or a user who signed out between two hops or attempts therefore still had the request sent, an edit re-sent by a
   `307` among them, under the account the application had stopped acting for. The provider's answer now always decides the header, so `null` also drops
   an `Authorization` header set on the `HttpClient`, which used to be sent.
+- A client resolved after its configuration section reloads now sends the reloaded `AccessToken`, and sends it to the reloaded `BaseUrl`
+  ([#55](https://github.com/timbearcity/MediaWiki/issues/55)). The token was read when `IHttpClientFactory` built the handler pipeline, which it reuses for
+  the handler lifetime (two minutes by default, for good with `Timeout.InfiniteTimeSpan`), while the base address was read for each client. Until the
+  pipeline rotated, a rotated or removed token was still sent, an added one was not, and a `BaseUrl` pointed at another wiki was sent the previous wiki's
+  token. The token is now set on the `HttpClient` together with the base address, so an `Authorization` header set through `ConfigureHttpClient` on the
+  returned builder now replaces an `AccessToken` instead of being replaced by it. `AccessTokenProvider` still decides the header on every request.
 
 ## [0.3.0] - 2026-09-26
 

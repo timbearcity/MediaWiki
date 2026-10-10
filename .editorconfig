@@ -16,6 +16,12 @@ trim_trailing_whitespace = false
 # Prose is hard-wrapped at the same width as the code, so Rider's Markdown reformat reflows it the same way everywhere.
 max_line_length = 160
 
+# The docfx template script keeps the two-space indent of the JSON and YAML beside it, spaced object braces and one-line simple functions.
+[*.js]
+indent_size = 2
+ij_javascript_spaces_within_object_literal_braces = true
+ij_javascript_keep_simple_methods_in_one_line = true
+
 # Rider does not know dotnet_diagnostic IDs or csharp_style_prefer_primary_constructors; dotnet build still honours them.
 # noinspection EditorConfigKeyCorrectness
 [*.cs]
@@ -99,6 +105,8 @@ resharper_xmldoc_space_before_self_closing = false
 # Attributes stay on the same line as their owner unless the line would exceed max_line_length.
 # The default moves any attribute longer than 38 characters to its own line, which splits record parameters.
 resharper_max_attribute_length_for_same_line = 200
+# That limit would also pull a field's or enum member's attribute onto its line, so those keep it on its own line.
+resharper_csharp_place_field_attribute_on_same_line = never
 
 # Parameter lists that exceed max_line_length go one parameter per line, starting after the "(".
 # Argument lists are left on the default fill-then-spill: chopping them also splits calls that end in a multiline lambda or initializer.

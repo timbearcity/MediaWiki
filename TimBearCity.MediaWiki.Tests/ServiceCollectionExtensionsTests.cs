@@ -1108,6 +1108,51 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(EinsteinPage.Title, page?.Title);
     }
 
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 2)]
+    public async Task AddMediaWikiClient_RetryHandler_AsksTheProviderAgainOnlyFromOutsideTheTokenHandler(bool registeredAsDefault, int expectedAsked)
+    {
+        var asked = 0;
+        var answers = 0;
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateResponding(_ => answers++ == 0
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(EinsteinPage.Json, Encoding.UTF8, MediaTypeNames.Application.Json)
+            }));
+
+        if (registeredAsDefault)
+        {
+            // A default sits outside the client's own handlers, so each attempt passes the token handler and asks again.
+            services.ConfigureHttpClientDefaults(builder => builder.AddHttpMessageHandler(() => new RetryOnceHandler()));
+        }
+
+        var clientBuilder = services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ => ValueTask.FromResult<string?>($"token-{++asked}");
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        if (!registeredAsDefault)
+        {
+            // On the builder the registration returns, as the README shows: inside the token handler, so the retry
+            // re-sends the request with the token it already carries.
+            clientBuilder.AddHttpMessageHandler(() => new RetryOnceHandler());
+        }
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, handler.Hops.Count);
+        Assert.Equal(expectedAsked, asked);
+        Assert.Equal(["token-1", $"token-{expectedAsked}"], handler.Hops.Select(hop => hop.Token));
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_SectionOmitsTimeout_LeavesTimeoutAtDefault()
     {

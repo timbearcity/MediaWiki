@@ -53,7 +53,7 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 | `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`, so at most 24.20:31:23.647, or `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration) to let a resilience handler own the timeout. Bound as `d.hh:mm:ss`: `"30"` is 30 days, `"00:00:30"` is 30 seconds. |
 | `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates.                                                                                                                   |
 | `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write.                                                                                                                                                                       |
-| `AccessTokenProvider` | none       | Optional callback asked for the bearer token before each HTTP request, including each redirect hop and retry, so it should cache. Code only; exclusive with `AccessToken`.                                                                                |
+| `AccessTokenProvider` | none       | Optional callback asked for the bearer token before each request and each redirect hop, so it should cache. Code only; exclusive with `AccessToken`.                                                                                                      |
 
 Each registration binds one client to one wiki: `BaseUrl` is the `HttpClient` base address and `AccessToken` is only valid on that wiki. Registering the same
 wiki twice throws from the second `AddMediaWikiClient` call.
@@ -262,10 +262,10 @@ the API refuses with `400`. A wiki with the handler answers audio and video with
 ## Write
 
 Creating and updating pages needs an authenticated client: set `AccessToken` to an OAuth2 token or personal access token carrying the rights the wiki asks for,
-or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each HTTP request and sends it anonymously when it answers
-`null`. That includes each hop of a redirect and each retry of a resilience handler, so a provider that fetches from a token service should cache the token.
-Its answer decides the `Authorization` header: `null` drops the token an earlier hop or attempt went out with, and a header set on the `HttpClient` too.
-Either one needs Extension:OAuth on the wiki; see [Third-party wikis](#third-party-wikis) for the cookie-based alternative.
+or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each request the client sends and again for each hop of a
+redirect, so a provider that fetches from a token service should cache the token. Its answer decides the `Authorization` header: `null` sends the request
+anonymously, dropping the token an earlier hop went out with and a header set on the `HttpClient` too. Either one needs Extension:OAuth on the wiki; see
+[Third-party wikis](#third-party-wikis) for the cookie-based alternative.
 
 ```csharp
 builder.Services.AddMediaWikiClient(options =>
@@ -275,6 +275,10 @@ builder.Services.AddMediaWikiClient(options =>
     options.AccessTokenProvider = cancellationToken => tokens.GetAccessTokenAsync(cancellationToken);
 });
 ```
+
+A resilience handler added to the builder `AddMediaWikiClient` returns, as shown under [Errors](#errors), sits inside the client's handlers, so a retry goes out
+with the token the request already carries. One registered through `ConfigureHttpClientDefaults` sits outside them: each of its attempts asks the provider
+again, and a `null` answer drops the token the earlier attempt went out with.
 
 ```csharp
 MediaWikiPage created = await client.CreatePageAsync(

@@ -3,9 +3,9 @@ using System.Net.Http.Headers;
 namespace TimBearCity.MediaWiki;
 
 /// <summary>
-/// Sets the bearer token on each request, from <see cref="MediaWikiOptions.AccessToken"/> or
-/// <see cref="MediaWikiOptions.AccessTokenProvider"/>, and clears it when the provider answers <see langword="null"/>
-/// or whitespace.
+/// Sets the bearer token on each request from <see cref="MediaWikiOptions.AccessTokenProvider"/>, and clears it when
+/// the provider answers <see langword="null"/> or whitespace. A static <see cref="MediaWikiOptions.AccessToken"/> does
+/// not come through here; <see cref="MediaWikiPipeline.ConfigureHttpClient"/> sets it on the <see cref="HttpClient"/>.
 /// </summary>
 /// <remarks>
 /// <para>

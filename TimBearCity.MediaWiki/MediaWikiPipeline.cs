@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Reflection;
 
@@ -21,20 +22,23 @@ internal static class MediaWikiPipeline
         // Ahead of the token handler, so that the token is set on each hop of a redirect and not just the first request.
         handlers.Add(new RedirectHandler());
 
-        // A wiki without a token gets no token handler at all.
+        // A wiki without a provider gets no token handler at all; a static AccessToken is set on the client instead.
         if (options.AccessTokenProvider is { } accessTokenProvider)
         {
             handlers.Add(new AccessTokenHandler(accessTokenProvider));
         }
-        else if (options.AccessToken is { } accessToken && !string.IsNullOrWhiteSpace(accessToken))
-        {
-            handlers.Add(new AccessTokenHandler(_ => ValueTask.FromResult<string?>(accessToken)));
-        }
     }
 
-    /// <summary>Applies the base address, timeout, size cap and headers to the client.</summary>
+    /// <summary>Applies the base address, timeout, size cap and headers, the static bearer token among them, to the client.</summary>
     /// <param name="client">A client that has not sent a request yet.</param>
     /// <param name="options">Validated options, so the User-Agent is known to parse.</param>
+    /// <remarks>
+    /// The static <see cref="MediaWikiOptions.AccessToken"/> is set here, beside the base address, rather than by a
+    /// handler: <c>IHttpClientFactory</c> configures each client it creates from the options as they are then, but hands
+    /// out a pooled handler pipeline built from an earlier reading, which a reload of a configuration section does not
+    /// reach until the pipeline rotates. The token and the wiki it belongs to therefore come from the same reading.
+    /// <see cref="RedirectHandler"/> keeps the header on a hop that stays on the wiki and clears it on one that leaves.
+    /// </remarks>
     internal static void ConfigureHttpClient(HttpClient client, MediaWikiOptions options)
     {
         client.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
@@ -48,6 +52,11 @@ internal static class MediaWikiPipeline
         client.DefaultRequestHeaders.Accept.ParseAdd(MediaTypeNames.Application.Json);
         client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
         client.DefaultRequestHeaders.UserAgent.ParseAdd(LibraryUserAgent);
+
+        if (!string.IsNullOrWhiteSpace(options.AccessToken))
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
+        }
     }
 
     /// <summary>

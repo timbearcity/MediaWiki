@@ -16,12 +16,18 @@ public sealed class MediaWikiOptions
     public string? AccessToken { get; set; }
 
     /// <summary>
-    /// Optional source of the bearer token, for a token that expires or differs per user. It is asked before each HTTP
-    /// request, including each hop of a redirect and each retry, so a provider that fetches the token should cache it.
+    /// Optional source of the bearer token, for a token that expires or differs per user. It is asked before each request
+    /// the client sends and again for each hop of a redirect, so a provider that fetches the token should cache it.
     /// Answering <see langword="null"/> or whitespace sends the request anonymously, even one that carried a token on an
-    /// earlier hop or attempt, or an <c>Authorization</c> header set on the <see cref="HttpClient"/>. Cannot be combined
-    /// with <see cref="AccessToken"/>, and cannot be bound from configuration.
+    /// earlier hop, or an <c>Authorization</c> header set on the <see cref="HttpClient"/>. Cannot be combined with
+    /// <see cref="AccessToken"/>, and cannot be bound from configuration.
     /// </summary>
+    /// <remarks>
+    /// A retry asks again only when the retry handler sits outside the client's own handlers, as one registered through
+    /// <c>ConfigureHttpClientDefaults</c> does, and a <see langword="null"/> answer then drops the token the earlier attempt
+    /// went out with. A retry handler added to the builder <c>AddMediaWikiClient</c> returns sits inside them and re-sends
+    /// the request with the token it already carries.
+    /// </remarks>
     public Func<CancellationToken, ValueTask<string?>>? AccessTokenProvider { get; set; }
 
     /// <summary>

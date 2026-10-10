@@ -140,6 +140,29 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal("commons-token", _commonsHandler.Request.Headers.Authorization?.Parameter);
     }
 
+    [Theory]
+    [InlineData("provider-token", "provider-token")]
+    [InlineData(null, null)]
+    public async Task AddMediaWikiClient_AccessTokenProviderOverCallerHeader_SendsWhatTheProviderAnswers(string? answer, string? expectedToken)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+            {
+                options.BaseUrl = BaseUrl;
+                options.UserAgent = UserAgent;
+                options.AccessTokenProvider = _ => ValueTask.FromResult(answer);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler)
+            .ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "caller-token"));
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedToken, _wikipediaHandler.Request.Headers.Authorization?.Parameter);
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_AppliesTimeoutAndMaxResponseSizeToHttpClient()
     {
@@ -683,6 +706,62 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         // The filter that turns redirects off sees every client the factory builds, and must leave the others alone.
         Assert.True(GetAllowAutoRedirect(GetPrimaryHandler(provider, "other")));
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_ProviderWithdrawsTheTokenBeforeARetry_SendsTheRetryAnonymously()
+    {
+        var tokens = new Queue<string?>(["first-token", null]);
+        var answers = 0;
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateResponding(_ => answers++ == 0
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(EinsteinPage.Json, Encoding.UTF8, MediaTypeNames.Application.Json)
+            }));
+
+        // A retry registered as a default sits outside the token handler and re-sends the request it was given.
+        services.ConfigureHttpClientDefaults(builder => builder.AddHttpMessageHandler(() => new RetryOnceHandler()));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ => ValueTask.FromResult(tokens.Dequeue());
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync(EinsteinPage.Key, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["first-token", null], handler.Hops.Select(hop => hop.Token));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public async Task AddMediaWikiClient_ProviderWithdrawsTheTokenOnARedirectHop_SendsTheHopAnonymously(string? secondAnswer)
+    {
+        var tokens = new Queue<string?>(["first-token", secondAnswer]);
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, $"{BaseUrl}page/Albert_Einstein", EinsteinPage.Json));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ => ValueTask.FromResult(tokens.Dequeue());
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageAsync("albert_Einstein", TestContext.Current.CancellationToken);
+
+        // The hop is a copy of the request before it, so the token that request went out with must not ride along.
+        Assert.Equal(["first-token", null], handler.Hops.Select(hop => hop.Token));
     }
 
     [Fact]

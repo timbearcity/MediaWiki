@@ -15,8 +15,9 @@ public sealed class MediaWikiOptions
     /// <summary>
     /// Optional source of the bearer token, for a token that expires or differs per user. It is asked before each HTTP
     /// request, including each hop of a redirect and each retry, so a provider that fetches the token should cache it.
-    /// Answering <see langword="null"/> or whitespace sends the request anonymously. Cannot be combined with
-    /// <see cref="AccessToken"/>, and cannot be bound from configuration.
+    /// Answering <see langword="null"/> or whitespace sends the request anonymously, even one that carried a token on an
+    /// earlier hop or attempt, or an <c>Authorization</c> header set on the <see cref="HttpClient"/>. Cannot be combined
+    /// with <see cref="AccessToken"/>, and cannot be bound from configuration.
     /// </summary>
     public Func<CancellationToken, ValueTask<string?>>? AccessTokenProvider { get; set; }
 

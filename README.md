@@ -260,6 +260,7 @@ the API refuses with `400`. A wiki with the handler answers audio and video with
 Creating and updating pages needs an authenticated client: set `AccessToken` to an OAuth2 token or personal access token carrying the rights the wiki asks for,
 or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each HTTP request and sends it anonymously when it answers
 `null`. That includes each hop of a redirect and each retry of a resilience handler, so a provider that fetches from a token service should cache the token.
+Its answer decides the `Authorization` header: `null` drops the token an earlier hop or attempt went out with, and a header set on the `HttpClient` too.
 Either one needs Extension:OAuth on the wiki; see [Third-party wikis](#third-party-wikis) for the cookie-based alternative.
 
 ```csharp

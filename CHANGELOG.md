@@ -11,6 +11,15 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Fixed
+
+- A redirect hop or a retry no longer goes out with the bearer token of the send before it when `AccessTokenProvider` answers `null` or whitespace for
+  it ([#54](https://github.com/timbearcity/MediaWiki/issues/54)). A hop is a copy of the request before it, and a retry handler registered through
+  `ConfigureHttpClientDefaults` re-sends the same request, so both arrived carrying the earlier token, and the client only replaced it when the provider
+  had a new one. A token that expired or a user who signed out between two hops or attempts therefore still had the request sent, an edit re-sent by a
+  `307` among them, under the account the application had stopped acting for. The provider's answer now always decides the header, so `null` also drops
+  an `Authorization` header set on the `HttpClient`, which used to be sent.
+
 ## [0.3.0] - 2026-09-26
 
 ### Added

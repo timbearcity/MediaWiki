@@ -25,6 +25,14 @@ compares each release against the previous one, so a change to the contract cann
   pipeline rotated, a rotated or removed token was still sent, an added one was not, and a `BaseUrl` pointed at another wiki was sent the previous wiki's
   token. The token is now set on the `HttpClient` together with the base address, so an `Authorization` header set through `ConfigureHttpClient` on the
   returned builder now replaces an `AccessToken` instead of being replaced by it. `AccessTokenProvider` still decides the header on every request.
+- `ValidateOnStart` now refuses a `MediaWikiOptions.UserAgent` with a character beyond ASCII, such as `MyApp/1.0 (José García; jose@example.com)` or an
+  en dash pasted into the contact details, and an `AccessToken` that cannot be sent in a header, such as one read from a file with its line break
+  ([#57](https://github.com/timbearcity/MediaWiki/issues/57)); `new MediaWikiClient(options)` throws `ArgumentException` for both. The header parser lets
+  such a character through inside a comment, so the `UserAgent` passed, and every request then failed with a `MediaWikiException` marked transient, which
+  a retry policy kept retrying; a control character was sent as it was. A token with a line break threw `FormatException` when the client was created,
+  one beyond ASCII failed every request the same way, and one with a space inside went out split in two. Spaces before a token and spaces or tabs after it
+  are still accepted, since HTTP lets them through. A token `AccessTokenProvider` answers that cannot be sent now throws `InvalidOperationException`
+  naming the provider, before the request goes out.
 
 ## [0.3.0] - 2026-09-26
 

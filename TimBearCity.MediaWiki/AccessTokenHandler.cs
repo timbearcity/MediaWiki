@@ -6,6 +6,9 @@ namespace TimBearCity.MediaWiki;
 /// Sets the bearer token on each request from <see cref="MediaWikiOptions.AccessTokenProvider"/>, and clears it when
 /// the provider answers <see langword="null"/> or whitespace. A static <see cref="MediaWikiOptions.AccessToken"/> does
 /// not come through here; <see cref="MediaWikiPipeline.ConfigureHttpClient"/> sets it on the <see cref="HttpClient"/>.
+/// An answer that cannot be sent in a header throws <see cref="InvalidOperationException"/> naming the provider, as
+/// <see cref="MediaWikiOptionsValidator"/> refuses such an <see cref="MediaWikiOptions.AccessToken"/>, rather than leaving
+/// the header to throw <see cref="FormatException"/>, or the primary handler a transient failure.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -27,6 +30,12 @@ internal sealed class AccessTokenHandler(Func<CancellationToken, ValueTask<strin
         if (!request.Options.TryGetValue(RedirectHandler.IsAnonymous, out _))
         {
             var accessToken = await accessTokenProvider(cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(accessToken) && !MediaWikiOptionsValidator.IsSendableAccessToken(accessToken))
+            {
+                throw new InvalidOperationException(
+                    $"The token from {nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.AccessTokenProvider)} {MediaWikiOptionsValidator.AccessTokenRequirement}");
+            }
 
             request.Headers.Authorization = string.IsNullOrWhiteSpace(accessToken) ? null : new AuthenticationHeaderValue("Bearer", accessToken);
         }

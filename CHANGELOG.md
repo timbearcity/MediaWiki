@@ -33,6 +33,11 @@ compares each release against the previous one, so a change to the contract cann
   one beyond ASCII failed every request the same way, and one with a space inside went out split in two. Spaces before a token and spaces or tabs after it
   are still accepted, since HTTP lets them through. A token `AccessTokenProvider` answers that cannot be sent now throws `InvalidOperationException`
   naming the provider, before the request goes out.
+- The error key is now also read from `errorCode`, the name MediaWiki's error schema 2.0 gives it ([#58](https://github.com/timbearcity/MediaWiki/issues/58)).
+  Each REST module picks its schema; MediaWiki 1.47 adds 2.0 for its `content/v2-beta` module, while the `/v1/` routes this client calls still answer in 1.0,
+  so no wiki is affected today. Under 2.0 the key read as missing: every method that answers `null` for a missing page, revision or file would have thrown
+  instead, `MediaWikiException.ErrorKey` would have been `null`, `IsTransient` would have counted the two `500`s that blame the request as transient, and a
+  `404` would have been reported as a wrong base URL.
 
 ## [0.3.0] - 2026-09-26
 

@@ -605,7 +605,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
             CultureInfo.InvariantCulture,
             $"The request to '{requestUri}' failed with status {(int)response.StatusCode}{(reason is null ? null : $" {reason}")}.{(detail is null ? null : $" {detail}")}{(hint is null ? null : $" {hint}")}");
 
-        return Trace(new MediaWikiException(message, response.StatusCode, error?.ErrorKey, GetRetryAfter(response)));
+        return Trace(new MediaWikiException(message, response.StatusCode, error?.Key, GetRetryAfter(response)));
     }
 
     /// <summary>The <see cref="HttpClient"/> behind <see cref="MediaWikiClient(MediaWikiOptions, HttpMessageHandler?)"/>.</summary>
@@ -677,7 +677,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
     {
         return response.StatusCode is not HttpStatusCode.NotFound
             ? null
-            : error?.ErrorKey switch
+            : error?.Key switch
             {
                 null => "The body was not a MediaWiki error, so the request may not have reached the REST API; check the base URL.",
                 "rest-no-match" => "The wiki has no such endpoint, which usually means its MediaWiki version predates it.",
@@ -763,7 +763,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var error = await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false);
 
-        if (error?.ErrorKey is { } errorKey &&
+        if (error?.Key is { } errorKey &&
             (errorKey == absentErrorKey || (response.StatusCode is HttpStatusCode.NotFound && absentErrorKeys.Contains(errorKey))))
         {
             // Not a failure, but worth seeing in a trace: the span would otherwise read as a plain success.

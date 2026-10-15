@@ -85,6 +85,30 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageAsync_NoMatchUnderErrorSchema2_ThrowsWithErrorCodeAsErrorKey()
+    {
+        // Error schema 2.0 names the key errorCode; read under the old name only, it would be missing, and the hint would blame the base URL.
+        const string errorJson =
+            $$"""
+              {
+                "errorCode": "{{MediaWikiErrorKeys.NoMatch}}",
+                "message": "The requested relative path (/v1/page/Albert_Einstein) did not match any known handler",
+                "messageTranslations": { "en": "The requested relative path (/v1/page/Albert_Einstein) did not match any known handler" },
+                "httpCode": 404,
+                "tracing": { "module": "mediawiki", "method": "get", "uri": "/w/rest.php/v1/page/Albert_Einstein", "request_id": "a6b3d89e" }
+              }
+              """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.NotFound);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(MediaWikiErrorKeys.NoMatch, exception.ErrorKey);
+        Assert.Contains("no such endpoint", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetPageAsync_NoReasonPhraseAndUnreadableErrorBody_ReportsStatusOnly()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningContent("<html>Gateway timeout</html>", MediaTypeNames.Text.Html, UnknownStatusCode);

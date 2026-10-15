@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mime;
 using Xunit;
 
@@ -122,6 +123,32 @@ public sealed class MediaWikiClientPageTests
         Assert.Null(page.Latest.Timestamp);
         Assert.Equal("css", page.ContentModel);
         Assert.Equal("/* CSS placed here will be applied to all skins */", page.Source);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_NotFoundUnderErrorSchema2_ReturnsNull()
+    {
+        // MediaWiki's error schema 2.0 names the key errorCode, adds an untranslated message, and trades httpReason for tracing data.
+        const string errorJson =
+            $$"""
+              {
+                "errorCode": "{{MediaWikiErrorKeys.NonexistentTitle}}",
+                "message": "The specified page (Nonexistent) does not exist",
+                "messageTranslations": { "en": "The specified page (Nonexistent) does not exist" },
+                "httpCode": 404,
+                "tracing": {
+                  "module": "mediawiki",
+                  "method": "get",
+                  "uri": "/w/rest.php/v1/page/Nonexistent",
+                  "request_id": "a6b3d89e",
+                  "url": "https://wiki.example/w/rest.php/v1/page/Nonexistent"
+                }
+              }
+              """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.NotFound);
+        using var httpClient = handler.CreateClient();
+
+        Assert.Null(await new MediaWikiClient(httpClient).GetPageAsync("Nonexistent", TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -113,6 +113,34 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Null(_wikipediaHandler.Request.Headers.Authorization);
     }
 
+    [Theory]
+    [InlineData("provider-token\n")]
+    [InlineData("provider token")]
+    [InlineData("provider-tökèn")]
+    public async Task AddMediaWikiClient_AccessTokenProviderAnswersTokenThatCannotBeSent_ThrowsInvalidOperationException(string answer)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessTokenProvider = _ => ValueTask.FromResult<string?>(answer);
+        }).ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        var client = provider.GetRequiredService<IMediaWikiClient>();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken));
+
+        // Neither the header's FormatException nor the primary handler's transient failure, which would not name the provider.
+        Assert.Contains("The token from MediaWikiOptions.AccessTokenProvider must contain only visible ASCII characters", exception.Message,
+            StringComparison.Ordinal);
+        Assert.Empty(_wikipediaHandler.Requests);
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_AccessTokenProviderOnNamedWiki_AppliesToThatWikiOnly()
     {
@@ -163,6 +191,34 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(expectedToken, _wikipediaHandler.Request.Headers.Authorization?.Parameter);
     }
 
+    [Theory]
+    [InlineData("secret-token\n")]
+    [InlineData("secret-token\r\n")]
+    [InlineData("\nsecret-token")]
+    [InlineData("secret-token\0")]
+    [InlineData("\tsecret-token")]
+    [InlineData("secret token")]
+    [InlineData("secret-tökèn")]
+    [InlineData("﻿secret-token")]
+    public async Task AddMediaWikiClient_AccessTokenThatCannotBeSent_ThrowsOptionsValidationException(string accessToken)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = accessToken;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        // A line break used to throw FormatException as the client was created, and a character beyond ASCII to fail every request.
+        Assert.Contains("MediaWikiOptions.AccessToken must contain only visible ASCII characters", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_AccessTokenWithCallerHeader_SendsTheCallerHeader()
     {
@@ -183,6 +239,30 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         // The static token is set on the HttpClient, where the caller's configuration runs after the library's.
         Assert.Equal("caller-token", _wikipediaHandler.Request.Headers.Authorization?.Parameter);
+    }
+
+    [Theory]
+    [InlineData(" secret-token")]
+    [InlineData("secret-token ")]
+    [InlineData("secret-token\t")]
+    [InlineData("  secret-token \t")]
+    public async Task AddMediaWikiClient_AccessTokenWithSurroundingWhitespace_SendsIt(string accessToken)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+            options.AccessToken = accessToken;
+        }).ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        // HTTP allows spaces between the scheme and the token, and strips spaces and tabs from the end of a header value.
+        Assert.Equal(accessToken, _wikipediaHandler.Request.Headers.Authorization?.Parameter);
     }
 
     [Fact]
@@ -1304,6 +1384,52 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         var exception = Assert.Throws<InvalidOperationException>(() => monitor.Get(Options.DefaultName));
 
         Assert.Contains(key, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("MyApp/1.0 (José García; jose@example.com)")]
+    [InlineData("MyApp/1.0 (https://example.com – contact@example.com)")]
+    [InlineData("MyApp/1.0 (維基; wiki@example.org)")]
+    [InlineData("Wikiläsare/1.0 (https://example.se)")]
+    [InlineData("MyApp/1.0 (contact\u0001@example.com)")]
+    [InlineData("MyApp/1.0 (contact\0@example.com)")]
+    [InlineData("MyApp/1.0 (https://example.com;\r\n contact@example.com)")]
+    public async Task AddMediaWikiClient_UserAgentThatCannotBeSent_ThrowsOptionsValidationException(string userAgent)
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = userAgent;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        // The header parser accepts most of these inside a comment, but the primary handler refuses anything beyond ASCII.
+        Assert.Contains("MediaWikiOptions.UserAgent must contain only visible ASCII characters, spaces and tabs", exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_UserAgentWithTab_SendsIt()
+    {
+        const string userAgent = "MyApp/1.0 (https://example.com;\tcontact@example.com)";
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = userAgent;
+        }).ConfigurePrimaryHttpMessageHandler(() => _wikipediaHandler);
+
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IMediaWikiClient>().SearchPagesAsync("physicist", 10, TestContext.Current.CancellationToken);
+
+        Assert.StartsWith(userAgent, _wikipediaHandler.Request.Headers.UserAgent.ToString(), StringComparison.Ordinal);
     }
 
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)

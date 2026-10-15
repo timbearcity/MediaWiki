@@ -166,7 +166,9 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// The configured client. Its <see cref="HttpClient.BaseAddress"/> must be an http or https URL whose path ends with
     /// <c>/</c>, since request URIs are relative and resolving one against <c>.../rest.php/v1</c> drops the <c>v1</c>. For the
     /// same reason it must have no query string or fragment, which every request would drop. Its default headers must
-    /// carry a <c>User-Agent</c>, which Wikimedia wikis refuse requests without.
+    /// carry a <c>User-Agent</c>, which Wikimedia wikis refuse requests without. They must be ASCII as well, unless the
+    /// primary handler's <see cref="SocketsHttpHandler.RequestHeaderEncodingSelector"/> picks another encoding; the
+    /// constructor cannot see the handler to check, and a header beyond ASCII otherwise fails every request.
     /// </param>
     public MediaWikiClient(HttpClient httpClient)
     {
@@ -1108,8 +1110,9 @@ public sealed class MediaWikiClient : IMediaWikiClient
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // A handler the caller added to the pipeline threw, such as a resilience handler that gave up. Its
-            // exception is theirs to catch, but the operation still failed.
+            // A handler the caller added to the pipeline threw, such as a resilience handler that gave up, or their
+            // AccessTokenProvider threw or answered a token that cannot be sent. The exception is theirs to catch, but
+            // the operation still failed.
             Trace(exception);
             throw;
         }

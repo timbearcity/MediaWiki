@@ -21,7 +21,7 @@ configuration is bound by hand rather than through reflection.
 
 `AddMediaWikiClient` registers `IMediaWikiClient` as a typed `HttpClient`. A `User-Agent` is
 [required by the MediaWiki API guidelines](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy); the options are validated at
-startup, including whether `UserAgent` is a well-formed header.
+startup, including whether `UserAgent` is a well-formed header, and whether it and `AccessToken` can be sent in a header at all.
 
 ```csharp
 builder.Services.AddMediaWikiClient(options =>
@@ -49,10 +49,10 @@ builder.Services.AddMediaWikiClient(builder.Configuration.GetSection(MediaWikiOp
 | Option                | Default    | Notes                                                                                                                                                                                                                                                     |
 |-----------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `BaseUrl`             | none       | Required. Absolute `http` or `https` URL of the REST endpoint.                                                                                                                                                                                            |
-| `UserAgent`           | none       | Required. Sent ahead of this library's own token.                                                                                                                                                                                                         |
+| `UserAgent`           | none       | Required. Sent ahead of this library's own token. Visible ASCII, spaces and tabs only, since a header is sent as ASCII: write José as Jose.                                                                                                               |
 | `Timeout`             | 30 seconds | Applied to the underlying `HttpClient`, so at most 24.20:31:23.647, or `Timeout.InfiniteTimeSpan` (`"-00:00:00.001"` in configuration) to let a resilience handler own the timeout. Bound as `d.hh:mm:ss`: `"30"` is 30 days, `"00:00:30"` is 30 seconds. |
 | `MaxResponseSize`     | none       | Optional cap on a response body, in bytes. Unset keeps the `HttpClient` default (2 GB). A larger response throws rather than truncates.                                                                                                                   |
-| `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write.                                                                                                                                                                       |
+| `AccessToken`         | none       | Optional OAuth2 / personal access token, sent as a bearer token. Required to write. Visible ASCII only, so trim the line break off a token read from a file.                                                                                              |
 | `AccessTokenProvider` | none       | Optional callback asked for the bearer token before each request and each redirect hop, so it should cache. Code only; exclusive with `AccessToken`.                                                                                                      |
 
 Each registration binds one client to one wiki: `BaseUrl` is the `HttpClient` base address and `AccessToken` is only valid on that wiki. Registering the same
@@ -110,9 +110,10 @@ The options are read once, when the client is built; to rotate a token, set `Acc
 with a proxy; an `HttpClientHandler` or `SocketsHttpHandler` there has its `AllowAutoRedirect` turned off, since the client follows redirects itself.
 
 To build the handler pipeline yourself, pass an `HttpClient` instead. Its `BaseAddress` must be an `http` or `https` URL that ends with `/` and has no query
-string or fragment, and it must carry a `User-Agent`; the constructor throws otherwise. Nothing from `MediaWikiOptions` is applied on this path, and
-redirects are the primary handler's: `HttpClientHandler` drops the `Authorization` header on every hop, so an authenticated request for a title the wiki
-normalizes continues anonymously.
+string or fragment, and it must carry a `User-Agent`; the constructor throws otherwise. Its headers must be ASCII as well, unless the primary handler's
+`RequestHeaderEncodingSelector` picks another encoding; the constructor cannot see the handler to check, and a header beyond ASCII otherwise fails every
+request. Nothing from `MediaWikiOptions` is applied on this path, and redirects are the primary handler's: `HttpClientHandler` drops the `Authorization`
+header on every hop, so an authenticated request for a title the wiki normalizes continues anonymously.
 
 ```csharp
 httpClient.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");
@@ -264,7 +265,8 @@ the API refuses with `400`. A wiki with the handler answers audio and video with
 Creating and updating pages needs an authenticated client: set `AccessToken` to an OAuth2 token or personal access token carrying the rights the wiki asks for,
 or, for a token that expires or differs per user, `AccessTokenProvider`, which is asked before each request the client sends and again for each hop of a
 redirect, so a provider that fetches from a token service should cache the token. Its answer decides the `Authorization` header: `null` sends the request
-anonymously, dropping the token an earlier hop went out with and a header set on the `HttpClient` too. Either one needs Extension:OAuth on the wiki; see
+anonymously, dropping the token an earlier hop went out with and a header set on the `HttpClient` too, and one that cannot be sent in a header, such as a
+token ending with a line break, throws `InvalidOperationException` before the request goes out. Either one needs Extension:OAuth on the wiki; see
 [Third-party wikis](#third-party-wikis) for the cookie-based alternative.
 
 ```csharp

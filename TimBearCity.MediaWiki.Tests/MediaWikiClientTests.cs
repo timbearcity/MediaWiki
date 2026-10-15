@@ -125,7 +125,8 @@ public sealed class MediaWikiClientTests
         var options = new MediaWikiOptions
         {
             BaseUrl = "https://example.org/w/rest.php/v1",
-            UserAgent = "MyApp/1.0 (unclosed comment"
+            UserAgent = "MyApp/1.0 (unclosed comment",
+            AccessToken = "secret-token\n"
         };
 
         var exception = Assert.Throws<ArgumentException>(() => new MediaWikiClient(options));
@@ -133,6 +134,7 @@ public sealed class MediaWikiClientTests
         Assert.Equal("options", exception.ParamName);
         Assert.Contains("MediaWikiOptions.BaseUrl must end with '/'", exception.Message, StringComparison.Ordinal);
         Assert.Contains("MediaWikiOptions.UserAgent is not a valid User-Agent header.", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("MediaWikiOptions.AccessToken must contain only visible ASCII characters", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

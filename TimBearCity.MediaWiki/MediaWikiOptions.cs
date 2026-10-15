@@ -11,7 +11,9 @@ public sealed class MediaWikiOptions
     /// so it suits a token that does not expire. It is set on the <see cref="HttpClient"/> along with
     /// <see cref="BaseUrl"/>, so a client sends the token read with its own base address, and an <c>Authorization</c>
     /// header set on the <see cref="HttpClient"/> afterwards replaces it. Cannot be combined with
-    /// <see cref="AccessTokenProvider"/>.
+    /// <see cref="AccessTokenProvider"/>. Must contain only visible ASCII characters, apart from spaces before it and
+    /// spaces or tabs after it, since nothing else can be sent in a header; a token read from a file usually ends with a
+    /// line break, which has to be trimmed.
     /// </summary>
     public string? AccessToken { get; set; }
 
@@ -19,8 +21,9 @@ public sealed class MediaWikiOptions
     /// Optional source of the bearer token, for a token that expires or differs per user. It is asked before each request
     /// the client sends and again for each hop of a redirect, so a provider that fetches the token should cache it.
     /// Answering <see langword="null"/> or whitespace sends the request anonymously, even one that carried a token on an
-    /// earlier hop, or an <c>Authorization</c> header set on the <see cref="HttpClient"/>. Cannot be combined with
-    /// <see cref="AccessToken"/>, and cannot be bound from configuration.
+    /// earlier hop, or an <c>Authorization</c> header set on the <see cref="HttpClient"/>. An answer that cannot be sent
+    /// in a header, as <see cref="AccessToken"/> describes, throws <see cref="InvalidOperationException"/> before the
+    /// request goes out. Cannot be combined with <see cref="AccessToken"/>, and cannot be bound from configuration.
     /// </summary>
     /// <remarks>
     /// A retry asks again only when the retry handler sits outside the client's own handlers, as one registered through
@@ -52,7 +55,9 @@ public sealed class MediaWikiOptions
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Mandatory HTTP User-Agent header required by MediaWiki policy.
+    /// Mandatory HTTP User-Agent header required by MediaWiki policy. Must be a well-formed header containing only visible
+    /// ASCII characters, spaces and tabs, since a header is sent as ASCII: write a contact name such as José without its
+    /// accent.
     /// </summary>
     public string UserAgent { get; set; } = string.Empty;
 }

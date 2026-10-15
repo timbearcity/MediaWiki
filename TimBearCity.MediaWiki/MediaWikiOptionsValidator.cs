@@ -11,6 +11,13 @@ namespace TimBearCity.MediaWiki;
 internal sealed class MediaWikiOptionsValidator : IValidateOptions<MediaWikiOptions>
 {
     /// <summary>
+    /// The end of the message refusing a bearer token that cannot be sent, shared with <see cref="AccessTokenHandler"/> so
+    /// a token from <see cref="MediaWikiOptions.AccessTokenProvider"/> is refused in the same words.
+    /// </summary>
+    internal const string AccessTokenRequirement =
+        "must contain only visible ASCII characters, other than spaces at its start and spaces or tabs at its end, since nothing else can be sent in a header. A token read from a file often ends with a line break, which has to be trimmed.";
+
+    /// <summary>
     /// The end of the message refusing a base address that is not http or https, shared with the
     /// <see cref="MediaWikiClient"/> constructor so both paths word it alike.
     /// </summary>
@@ -80,6 +87,11 @@ internal sealed class MediaWikiOptionsValidator : IValidateOptions<MediaWikiOpti
         {
             failures.Add($"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.UserAgent)}{wiki} {UserAgentRequirement}");
         }
+        else if (!IsHeaderText(options.UserAgent))
+        {
+            failures.Add(
+                $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.UserAgent)}{wiki} must contain only visible ASCII characters, spaces and tabs, since nothing else can be sent in a header.");
+        }
         else if (!IsValidUserAgent(options.UserAgent))
         {
             failures.Add(
@@ -92,7 +104,33 @@ internal sealed class MediaWikiOptionsValidator : IValidateOptions<MediaWikiOpti
                 $"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.AccessToken)} and {nameof(MediaWikiOptions.AccessTokenProvider)}{wiki} cannot both be set.");
         }
 
+        if (!string.IsNullOrWhiteSpace(options.AccessToken) && !IsSendableAccessToken(options.AccessToken))
+        {
+            failures.Add($"{nameof(MediaWikiOptions)}.{nameof(MediaWikiOptions.AccessToken)}{wiki} {AccessTokenRequirement}");
+        }
+
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="accessToken"/>, which is not <see langword="null"/> or whitespace, can follow <c>Bearer</c> in
+    /// a header as it is: visible ASCII, after any spaces, which HTTP allows between the scheme and the token, and before
+    /// any spaces or tabs, which it strips from the end of a header value. A line break, a control character or anything
+    /// beyond ASCII cannot be sent, and whitespace inside the token would split it.
+    /// </summary>
+    internal static bool IsSendableAccessToken(string accessToken)
+    {
+        return !accessToken.TrimStart(' ').TrimEnd(' ', '\t').AsSpan().ContainsAnyExceptInRange('!', '~');
+    }
+
+    /// <summary>
+    /// Whether every character can go out in a header as it is: visible ASCII, a space or a tab. The header parser lets
+    /// anything else through inside a comment, but the primary handler sends headers as ASCII and refuses the request,
+    /// and a control character is sent as it is.
+    /// </summary>
+    private static bool IsHeaderText(string value)
+    {
+        return value.All(character => character is '\t' or (>= ' ' and <= '~'));
     }
 
     /// <summary>Whether the header parser accepts the value, as it must when the value is added to the client's headers.</summary>

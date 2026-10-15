@@ -1068,11 +1068,20 @@ public sealed class MediaWikiClient : IMediaWikiClient
         return searchResponse.Pages;
     }
 
-    /// <summary>Sends the request and reads the body, translating transport failures and timeouts into <see cref="MediaWikiException"/>.</summary>
+    /// <summary>
+    /// Sends the request and reads the body, translating transport failures, timeouts and cancellations the caller did not ask for into
+    /// <see cref="MediaWikiException"/>.
+    /// </summary>
     /// <remarks>
+    /// <para>
     /// <paramref name="accept"/> is set for the endpoints that answer with something other than JSON. The
     /// <see cref="HttpClient"/> that <c>AddMediaWikiClient</c> configures asks for <c>application/json</c> by default,
     /// which the wikitext-to-HTML transform refuses with <c>406</c>; a header set on the request replaces the default.
+    /// </para>
+    /// <para>
+    /// A timeout is reported with the time that passed rather than the client's <see cref="HttpClient.Timeout"/>, since the
+    /// limit that ran out need not be the client's own: <c>SocketsHttpHandler.ConnectTimeout</c> ends a request the same way.
+    /// </para>
     /// </remarks>
     private async Task<HttpResponseMessage> SendAsync(
         HttpMethod method,
@@ -1089,15 +1098,22 @@ public sealed class MediaWikiClient : IMediaWikiClient
             request.Headers.Accept.Add(accept);
         }
 
+        var started = Stopwatch.GetTimestamp();
+
         try
         {
             return await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            // HttpClient reports its own timeout as a cancellation, even though the caller never asked to cancel.
+            // HttpClient reports its own Timeout, and the connection pool its ConnectTimeout, as a cancellation around a
+            // TimeoutException. Any other cancellation comes from a handler, or from the HttpClient being canceled or disposed.
+            var elapsed = Stopwatch.GetElapsedTime(started);
+
             throw Trace(new MediaWikiException(
-                string.Create(CultureInfo.InvariantCulture, $"The request to '{requestUri}' timed out after {_httpClient.Timeout}."),
+                exception.InnerException is TimeoutException
+                    ? string.Create(CultureInfo.InvariantCulture, $"The request to '{requestUri}' timed out after {elapsed}.")
+                    : string.Create(CultureInfo.InvariantCulture, $"The request to '{requestUri}' was canceled after {elapsed}, though not by the caller."),
                 innerException: exception));
         }
         catch (HttpRequestException exception)

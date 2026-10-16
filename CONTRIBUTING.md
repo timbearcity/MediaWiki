@@ -45,8 +45,8 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 
 - `type` is one of the type table below. Nothing else is accepted.
 - `scope` is optional and names the part touched. It is one of the scope table below; nothing else is accepted.
-- `!` marks a breaking change and comes with a `BREAKING CHANGE:` footer saying what breaks and how to migrate. Until 1.0.0 a minor version may break, so
-  the marker is what makes those changes findable.
+- `!` marks a breaking change and comes with a `BREAKING CHANGE:` footer, spelled with a space rather than a hyphen, saying what breaks and how to
+  migrate; neither is accepted without the other. Until 1.0.0 a minor version may break, so the marker is what makes those changes findable.
 - `subject` is imperative and lowercase (`add`, not `Added` or `Adds`), has no trailing period, and keeps the whole header within 72 characters. The
   ` (#N)` that GitHub appends when a pull request is squash-merged does not count.
 - The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72 characters.

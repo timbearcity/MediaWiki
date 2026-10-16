@@ -43,8 +43,8 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 <footers>
 ```
 
-- `type` is one of the table below. Nothing else is accepted.
-- `scope` is optional and names the part touched, for example `client`, `options`, `di`, `tests` or `smoke`.
+- `type` is one of the type table below. Nothing else is accepted.
+- `scope` is optional and names the part touched. It is one of the scope table below; nothing else is accepted.
 - `!` marks a breaking change and comes with a `BREAKING CHANGE:` footer saying what breaks and how to migrate. Until 1.0.0 a minor version may break, so
   the marker is what makes those changes findable.
 - `subject` is imperative and lowercase (`add`, not `Added` or `Adds`), has no trailing period, and keeps the whole header within 72 characters. The
@@ -67,6 +67,17 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 
 The last column is the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) section a commit of that type lands in, so the changelog for a release
 can be compiled from `git log`. Types without a section do not appear in the changelog.
+
+| Area                  | Scopes                                                                              |
+|-----------------------|-------------------------------------------------------------------------------------|
+| The library           | `auth`, `client`, `diagnostics`, `errors`, `files`, `options`, `pages`, `revisions` |
+| Tests                 | `smoke`, `tests`                                                                    |
+| Build and release     | `deps`, `package`, `release`, `sln`                                                 |
+| CI and the repository | `commit-check`, `dependabot`, `github`, `scripts`                                   |
+| Documentation         | `contributing`, `docs`, `readme`, `site`                                            |
+| Editor settings       | `editorconfig`, `rider`                                                             |
+
+A new area adds its scope to this table and to the check below, which keeps its own copy of the types and scopes.
 
 Examples:
 

@@ -11,7 +11,9 @@ set -euo pipefail
 shopt -s extglob
 
 types='feat|fix|docs|test|refactor|style|build|ci|chore'
-header_pattern="^(${types})(\([a-z0-9._-]+\))?!?: [^ ].*[^. ]$"
+scopes='auth|client|commit-check|contributing|dependabot|deps|diagnostics|docs|editorconfig|errors|files|github|options|package|pages|readme|release|revisions|rider|scripts|site|sln|smoke|tests'
+header_pattern="^(${types})(\(([^()]+)\))?!?: [^ ].*[^. ]$"
+scope_pattern="^(${scopes})$"
 max_header_length=72
 
 # Prints the problems with one message, read from stdin, and fails when there are any.
@@ -34,7 +36,12 @@ check_message() {
     if [ -z "$header" ]; then
         problems+=('the message is empty')
     else
-        if ! [[ "$header" =~ $header_pattern ]]; then
+        if [[ "$header" =~ $header_pattern ]]; then
+            local scope="${BASH_REMATCH[3]}"
+            if [ -n "$scope" ] && ! [[ "$scope" =~ $scope_pattern ]]; then
+                problems+=("the scope '${scope}' is not one of ${scopes//|/, }")
+            fi
+        else
             problems+=("the header does not match '<type>(<scope>)!: <subject>' with a type of ${types//|/, }, a non-empty subject and no trailing period")
         fi
         local measured="${header%% (#+([0-9]))}"

@@ -34,6 +34,22 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageAsync_CanceledWithoutATimeout_DoesNotCallItATimeout()
+    {
+        // A handler with a deadline of its own, or an HttpClient that is canceled or disposed, ends the request with a
+        // cancellation that wraps no TimeoutException.
+        using var handler = HttpMessageHandlerStub.CreateThrowing(new TaskCanceledException());
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.DoesNotContain("timed out", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("was canceled after 00:00:00", exception.Message, StringComparison.Ordinal);
+        Assert.IsType<TaskCanceledException>(exception.InnerException);
+    }
+
+    [Fact]
     public async Task GetPageAsync_ErrorBody_SurfacesErrorDetail()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(ErrorJson, HttpStatusCode.BadRequest);
@@ -309,6 +325,25 @@ public sealed class MediaWikiClientErrorHandlingTests
         Assert.Null(exception.StatusCode);
         Assert.True(exception.IsTransient);
         Assert.Contains("timed out", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(30_000)]
+    [InlineData(Timeout.Infinite)]
+    public async Task GetPageAsync_TimeoutOtherThanTheClients_ReportsTheTimeThatPassed(int clientTimeoutMilliseconds)
+    {
+        // What the connection pool throws when SocketsHttpHandler.ConnectTimeout expires, here at once and so long before the client's own limit.
+        var connectTimeout = new TaskCanceledException(
+            "The operation was canceled.",
+            new TimeoutException("A connection could not be established within the configured ConnectTimeout."));
+        using var handler = HttpMessageHandlerStub.CreateThrowing(connectTimeout);
+        using var httpClient = handler.CreateClient(timeout: TimeSpan.FromMilliseconds(clientTimeoutMilliseconds));
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Contains("timed out after 00:00:00", exception.Message, StringComparison.Ordinal);
+        Assert.True(exception.IsTransient);
     }
 
     [Fact]

@@ -258,7 +258,7 @@ public sealed class MediaWikiClientTests
     }
 
     [Fact]
-    public async Task Constructor_OptionsWithTimeout_AppliesItToTheRequest()
+    public async Task Constructor_OptionsWithTimeout_TimesOutTheRequestAfterIt()
     {
         using var handler = HttpMessageHandlerStub.CreateBlocking();
         var options = CreateOptions();
@@ -267,7 +267,10 @@ public sealed class MediaWikiClientTests
 
         var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
 
-        Assert.Contains("timed out after 00:00:00.0500000", exception.Message, StringComparison.Ordinal);
+        // HttpClient's own timeout, which against a blocking handler can only be the one from the options.
+        Assert.IsType<TimeoutException>(exception.InnerException?.InnerException);
+        // Under a second, so the 50 ms applied rather than the 30 second default.
+        Assert.Contains("timed out after 00:00:00", exception.Message, StringComparison.Ordinal);
     }
 
     private static MediaWikiOptions CreateOptions(string? accessToken = null)

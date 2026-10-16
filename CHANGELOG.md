@@ -38,6 +38,12 @@ compares each release against the previous one, so a change to the contract cann
   so no wiki is affected today. Under 2.0 the key read as missing: every method that answers `null` for a missing page, revision or file would have thrown
   instead, `MediaWikiException.ErrorKey` would have been `null`, `IsTransient` would have counted the two `500`s that blame the request as transient, and a
   `404` would have been reported as a wrong base URL.
+- A `MediaWikiException` for a request ended by a cancellation the caller did not ask for now gives the time that passed, and calls it a timeout
+  only when a timeout ended it ([#59](https://github.com/timbearcity/MediaWiki/issues/59)). The message gave the client's `Timeout` as the duration
+  whatever ended the request, so a `SocketsHttpHandler.ConnectTimeout` that ran out after a quarter of a second read as timing out after `00:00:30`, or
+  after `-00:00:00.0010000` with the infinite `Timeout` the README suggests for a resilience handler, and a handler's own deadline,
+  `HttpClient.CancelPendingRequests()` or an `HttpClient` disposed in flight were reported as timeouts. Those now read as canceled, though not by the
+  caller. The exception is otherwise unchanged, and canceling your own `CancellationToken` still throws `OperationCanceledException`.
 
 ## [0.3.0] - 2026-09-26
 

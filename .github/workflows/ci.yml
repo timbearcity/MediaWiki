@@ -34,7 +34,12 @@ jobs:
   commit-messages:
     name: Commit messages
     # Only the commits a push or a pull request brings; a tag, the weekly run and a dispatch add none.
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'branch')
+    # Dependabot's NuGet updates start the subject with "Bump" whatever the prefix, so its pull requests are skipped;
+    # the title is lowercased when squash-merging, and the push to main checks that commit. The casing is a bug; drop
+    # the skip once https://github.com/dependabot/dependabot-core/pull/16310 is released.
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]')
+      || (github.event_name == 'push' && github.ref_type == 'branch')
     runs-on: ubuntu-latest
 
     steps:

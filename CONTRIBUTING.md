@@ -95,6 +95,10 @@ The check is `.github/scripts/check-commit-message.sh`. The hook runs it on the 
 `.github/workflows/ci.yml` runs it on every commit a push or a pull request brings, so a message that slips past a missing hook still fails the build. Both
 use the same script, so they cannot disagree.
 
+The job skips Dependabot's pull requests, since its NuGet updates start the subject with `Bump` whatever the prefix. Lowercase the title when
+squash-merging one; the push to `main` checks it like any other commit. That casing is a Dependabot bug, and the skip goes once its fix,
+[dependabot/dependabot-core#16310](https://github.com/dependabot/dependabot-core/pull/16310), is released.
+
 ## Releasing
 
 The steps for cutting a release, from the changelog to moving the package validation baseline afterwards, are in

@@ -12,8 +12,9 @@ shopt -s extglob
 
 types='feat|fix|docs|test|refactor|style|build|ci|chore'
 scopes='auth|client|commit-check|contributing|dependabot|deps|diagnostics|docs|editorconfig|errors|files|github|options|package|pages|readme|release|revisions|rider|scripts|site|sln|smoke|tests'
-header_pattern="^(${types})(\(([^()]+)\))?!?: ([^ ].*[^. ])$"
+header_pattern="^(${types})(\(([^()]+)\))?(!?): ([^ ].*[^. ])$"
 scope_pattern="^(${scopes})$"
+breaking_footer_pattern='^BREAKING CHANGE: [^ ]'
 max_header_length=72
 
 # Prints the problems with one message, read from stdin, and fails when there are any.
@@ -38,12 +39,25 @@ check_message() {
     else
         if [[ "$header" =~ $header_pattern ]]; then
             local scope="${BASH_REMATCH[3]}"
-            local subject="${BASH_REMATCH[4]}"
+            local breaking="${BASH_REMATCH[4]}"
+            local subject="${BASH_REMATCH[5]}"
             if [ -n "$scope" ] && ! [[ "$scope" =~ $scope_pattern ]]; then
                 problems+=("the scope '${scope}' is not one of ${scopes//|/, }")
             fi
             if [[ "$subject" != [a-z]* ]]; then
                 problems+=("the subject starts with '${subject%% *}' rather than a lowercase letter")
+            fi
+            local breaking_footer=''
+            for line in "${kept[@]:1}"; do
+                [[ "$line" =~ $breaking_footer_pattern ]] && breaking_footer='yes'
+                if [[ "$line" == BREAKING-CHANGE:* ]]; then
+                    problems+=("the footer is spelled 'BREAKING-CHANGE:'; write 'BREAKING CHANGE:' instead")
+                fi
+            done
+            if [ -n "$breaking" ] && [ -z "$breaking_footer" ]; then
+                problems+=("the '!' marks a breaking change, but no 'BREAKING CHANGE:' footer says what breaks")
+            elif [ -z "$breaking" ] && [ -n "$breaking_footer" ]; then
+                problems+=("the 'BREAKING CHANGE:' footer needs a '!' before the ':' in the header")
             fi
         else
             problems+=("the header does not match '<type>(<scope>)!: <subject>' with a type of ${types//|/, }, a non-empty subject and no trailing period")

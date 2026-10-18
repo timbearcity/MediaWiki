@@ -49,7 +49,8 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
   migrate; neither is accepted without the other. Until 1.0.0 a minor version may break, so the marker is what makes those changes findable.
 - `subject` is imperative and lowercase (`add`, not `Added` or `Adds`), has no trailing period, and keeps the whole header within 72 characters. The
   ` (#N)` that GitHub appends when a pull request is squash-merged does not count.
-- The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72 characters.
+- The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72
+  characters; only a line holding a URL or a trailer such as `Co-authored-by:` may run longer.
 - Footers are optional: `BREAKING CHANGE: ...`, `Fixes #12`, `Co-Authored-By: ...`.
 
 | Type            | Use                                                                   | `CHANGELOG.md`     |
@@ -89,7 +90,8 @@ feat(options)!: rename Token to AccessToken
 BREAKING CHANGE: MediaWikiOptions.Token is now AccessToken; configuration keys change accordingly.
 ```
 
-Merge commits, reverts and the `fixup!` and `squash!` commits of an interactive rebase are accepted as Git writes them.
+Merge commits, reverts and the `fixup!` and `squash!` commits of an interactive rebase are accepted as Git writes them, and so is the `* <header>` line
+GitHub writes for each commit in the body of a squash merge.
 
 The check is `.github/scripts/check-commit-message.sh`. The hook runs it on the message being committed, and the `Commit messages` job in
 `.github/workflows/ci.yml` runs it on every commit a push or a pull request brings, so a message that slips past a missing hook still fails the build. Both

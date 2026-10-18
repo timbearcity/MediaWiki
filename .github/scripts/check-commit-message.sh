@@ -29,6 +29,9 @@ max_body_line_length=72
 # Body lines that may run longer because they cannot be wrapped: one holding a URL, a trailer such as Co-authored-by, and the
 # "* <header>" GitHub writes for each commit in the body of a squash merge, which was checked as a header on its own.
 unwrappable_line_pattern="://|^[A-Za-z]+(-[A-Za-z]+)+: |^\* (${types})(\([^()]+\))?!?: "
+fixes_footer_pattern='^Fixes #[0-9]+$'
+# Any of GitHub's closing keywords before an issue here or in another repository, matched against the lowercased line.
+closing_keyword_pattern='(^|[^a-z0-9_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+([a-z0-9_.-]+/[a-z0-9_.-]+)?#[0-9]+'
 
 # Prints the problems with one message, read from stdin, and fails when there are any.
 check_message() {
@@ -83,11 +86,19 @@ check_message() {
     if [ "${#kept[@]}" -gt 1 ] && [ -n "${kept[1]}" ]; then
         problems+=('the header must be followed by a blank line')
     fi
-    local number
+    local number previous
     for ((number = 2; number <= ${#kept[@]}; number++)); do
         line="${kept[number - 1]}"
+        previous="${kept[number - 2]}"
         if [ "${#line}" -gt "$max_body_line_length" ] && ! [[ "$line" =~ $unwrappable_line_pattern ]]; then
             problems+=("line ${number} is ${#line} characters; the limit for the body is ${max_body_line_length}")
+        fi
+        if [[ "$line" =~ $fixes_footer_pattern ]]; then
+            if [ -n "$previous" ] && ! [[ "$previous" =~ $fixes_footer_pattern ]]; then
+                problems+=("line ${number} needs a blank line before it, so that 'Fixes #N' starts a paragraph of its own")
+            fi
+        elif [[ "${line,,}" =~ $closing_keyword_pattern ]]; then
+            problems+=("line ${number} closes an issue; only a line of its own reading 'Fixes #N' may do that")
         fi
     done
 

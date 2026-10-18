@@ -51,7 +51,9 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
   ` (#N)` that GitHub appends when a pull request is squash-merged does not count.
 - The body is optional and separated from the header by a blank line. It says what changed and why, not how; the diff shows how. Wrap it at 72
   characters; only a line holding a URL or a trailer such as `Co-authored-by:` may run longer.
-- Footers are optional: `BREAKING CHANGE: ...`, `Fixes #12`, `Co-Authored-By: ...`.
+- Footers are optional: `BREAKING CHANGE: ...`, `Fixes #12`, `Co-Authored-By: ...`. An issue is closed by a line of its own reading `Fixes #12`, one per
+  issue, after a blank line or another such line. Any other closing keyword before an issue number, such as `Closes #12`, `Fixes: #12` or a `fixes #12`
+  inside a sentence, is refused, since GitHub would still close the issue.
 
 | Type            | Use                                                                   | `CHANGELOG.md`     |
 |-----------------|-----------------------------------------------------------------------|--------------------|

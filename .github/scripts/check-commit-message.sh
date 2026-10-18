@@ -10,12 +10,25 @@
 set -euo pipefail
 shopt -s extglob
 
+# Lengths count characters, so "é" counts as one, but the hook may start in the C locale, where they count bytes.
+for locale in C.UTF-8 en_US.UTF-8; do
+    { LC_ALL="$locale"; } 2>/dev/null
+    probe=$'\xc3\xa9'
+    if [ "${#probe}" -eq 1 ]; then
+        break
+    fi
+done
+
 types='feat|fix|docs|test|refactor|style|build|ci|chore'
 scopes='auth|client|commit-check|contributing|dependabot|deps|diagnostics|docs|editorconfig|errors|files|github|options|package|pages|readme|release|revisions|rider|scripts|site|sln|smoke|tests'
 header_pattern="^(${types})(\(([^()]+)\))?(!?): ([^ ].*[^. ])$"
 scope_pattern="^(${scopes})$"
 breaking_footer_pattern='^BREAKING CHANGE: [^ ]'
 max_header_length=72
+max_body_line_length=72
+# Body lines that may run longer because they cannot be wrapped: one holding a URL, a trailer such as Co-authored-by, and the
+# "* <header>" GitHub writes for each commit in the body of a squash merge, which was checked as a header on its own.
+unwrappable_line_pattern="://|^[A-Za-z]+(-[A-Za-z]+)+: |^\* (${types})(\([^()]+\))?!?: "
 
 # Prints the problems with one message, read from stdin, and fails when there are any.
 check_message() {
@@ -70,6 +83,13 @@ check_message() {
     if [ "${#kept[@]}" -gt 1 ] && [ -n "${kept[1]}" ]; then
         problems+=('the header must be followed by a blank line')
     fi
+    local number
+    for ((number = 2; number <= ${#kept[@]}; number++)); do
+        line="${kept[number - 1]}"
+        if [ "${#line}" -gt "$max_body_line_length" ] && ! [[ "$line" =~ $unwrappable_line_pattern ]]; then
+            problems+=("line ${number} is ${#line} characters; the limit for the body is ${max_body_line_length}")
+        fi
+    done
 
     if [ "${#problems[@]}" -eq 0 ]; then
         return 0

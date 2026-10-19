@@ -659,6 +659,25 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(Timeout.InfiniteTimeSpan, httpClient.Timeout);
     }
 
+    [Fact]
+    public async Task AddMediaWikiClient_InvalidOptions_AreRefusedWhenTheHostStarts()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = "";
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        // What a host runs as it starts, before anything has asked for a client.
+        var exception = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IStartupValidator>().Validate());
+
+        Assert.Contains("MediaWikiOptions.UserAgent must be provided", exception.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("", UserAgent, 30, null)]
     [InlineData("not-a-url", UserAgent, 30, null)]
@@ -710,7 +729,7 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
 
-        // Found by ValidateOnStart, rather than when the first client is created.
+        // Found by the validator, with its own message, rather than as an InvalidOperationException from building the client.
         Assert.Contains("MediaWikiOptions.UserAgent is not a valid User-Agent header.", exception.Message, StringComparison.Ordinal);
     }
 
@@ -801,6 +820,24 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         Assert.Equal(BaseUrl, monitor.Get(Options.DefaultName).BaseUrl);
         Assert.Equal(CommonsBaseUrl, monitor.Get("commons").BaseUrl);
+    }
+
+    [Fact]
+    public async Task AddMediaWikiClient_NamedWikiWithInvalidOptions_IsRefusedWhenTheHostStarts()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient("commons", options =>
+        {
+            options.BaseUrl = CommonsBaseUrl;
+            options.UserAgent = "";
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IStartupValidator>().Validate());
+
+        Assert.Equal("commons", exception.OptionsName);
     }
 
     [Fact]

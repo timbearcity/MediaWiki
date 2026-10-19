@@ -433,6 +433,21 @@ public sealed class MediaWikiClientErrorHandlingTests
         Assert.Contains("could not be read as text", exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("null", "was empty; expected IReadOnlyList<MediaWikiLintError>.")]
+    [InlineData("{}", "could not be read as IReadOnlyList<MediaWikiLintError>: ")]
+    public async Task GetPageLintAsync_UnreadableBody_NamesTheListItExpected(string body, string expected)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(body);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageLintAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        // The type's own name is "IReadOnlyList`1", which says neither what was expected nor a list of what.
+        Assert.Contains(expected, exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task SearchPagesAsync_SearchError_ReportsNotTransient()
     {

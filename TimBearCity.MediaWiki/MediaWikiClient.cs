@@ -670,6 +670,22 @@ public sealed class MediaWikiClient : IMediaWikiClient
     }
 
     /// <summary>
+    /// The name of a model as it is written in code, so that a list reads <c>IReadOnlyList&lt;MediaWikiLintError&gt;</c>
+    /// where <see cref="System.Reflection.MemberInfo.Name"/> alone would give <c>IReadOnlyList`1</c>.
+    /// </summary>
+    private static string GetDisplayName(Type type)
+    {
+        if (!type.IsGenericType)
+        {
+            return type.Name;
+        }
+
+        var name = type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)];
+
+        return $"{name}<{string.Join(", ", type.GenericTypeArguments.Select(GetDisplayName))}>";
+    }
+
+    /// <summary>
     /// Explains a <c>404</c> that did not come from a missing page, revision or file, since the status alone reads as
     /// "not found" when the real problem is the wiki or the base URL.
     /// </summary>
@@ -812,13 +828,13 @@ public sealed class MediaWikiClient : IMediaWikiClient
         catch (Exception exception) when (exception is JsonException or NotSupportedException or InvalidOperationException)
         {
             throw Trace(new MediaWikiException(
-                $"The response to '{requestUri}' could not be read as {typeof(T).Name}: {exception.Message}",
+                $"The response to '{requestUri}' could not be read as {GetDisplayName(typeof(T))}: {exception.Message}",
                 response.StatusCode,
                 innerException: exception));
         }
 
         return value ?? throw Trace(new MediaWikiException(
-            $"The response to '{requestUri}' was empty; expected {typeof(T).Name}.",
+            $"The response to '{requestUri}' was empty; expected {GetDisplayName(typeof(T))}.",
             response.StatusCode));
     }
 

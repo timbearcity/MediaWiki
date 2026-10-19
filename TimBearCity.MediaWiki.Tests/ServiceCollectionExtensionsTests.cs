@@ -782,6 +782,24 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_NamedWiki_HandsOutANewClientEachTime()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient("commons", options =>
+        {
+            options.BaseUrl = CommonsBaseUrl;
+            options.UserAgent = UserAgent;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        Assert.NotSame(
+            provider.GetRequiredKeyedService<IMediaWikiClient>("commons"),
+            provider.GetRequiredKeyedService<IMediaWikiClient>("commons"));
+    }
+
+    [Fact]
     public void AddMediaWikiClient_NamedWikiRegisteredTwice_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();

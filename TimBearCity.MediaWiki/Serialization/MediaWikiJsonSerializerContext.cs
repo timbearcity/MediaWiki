@@ -12,8 +12,9 @@ namespace TimBearCity.MediaWiki.Serialization;
 /// <remarks>
 /// <see cref="JsonSourceGenerationOptionsAttribute.RespectNullableAnnotations"/> and
 /// <see cref="JsonSourceGenerationOptionsAttribute.RespectRequiredConstructorParameters"/> make the serializer honor
-/// the nullability of the model records, so a malformed response fails loudly instead of binding
-/// <see langword="null"/> into a non-nullable member.
+/// the nullability and the constructor parameters of the model records, so a malformed response fails loudly instead
+/// of binding <see langword="null"/> into a non-nullable member, or a default into a required one the response left out.
+/// They do not reach the elements of a collection, so a <see langword="null"/> inside a list is still let through.
 /// </remarks>
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,

@@ -4,16 +4,10 @@ on:
   # The site holds the tagged releases only, so it is published when one is tagged.
   push:
     tags: [ 'v*' ]
+  # Every pull request, whatever it changes: the site build is a required check, and a check whose workflow never
+  # starts is never reported, which blocks the merge. The build takes about a minute, less than CI.
   pull_request:
     branches: [ main ]
-    paths:
-      - docs/**
-      - TimBearCity.MediaWiki/**
-      - README.md
-      - CHANGELOG.md
-      - CONTRIBUTING.md
-      - .config/dotnet-tools.json
-      - .github/workflows/docs.yml
   # Republishes the releases between tags, for example after a fix to docs/ on main.
   workflow_dispatch:
 

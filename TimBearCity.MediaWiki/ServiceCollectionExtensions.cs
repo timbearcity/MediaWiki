@@ -30,11 +30,15 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers <see cref="IMediaWikiClient"/> as a typed <see cref="HttpClient"/>, bound to a
-    /// configuration section (<see cref="MediaWikiOptions.Position"/> by default).
+    /// Registers <see cref="IMediaWikiClient"/> as a typed <see cref="HttpClient"/>, bound to the configuration section it is
+    /// given: by convention the one named <see cref="MediaWikiOptions.Position"/>, as in
+    /// <c>configuration.GetSection(MediaWikiOptions.Position)</c>.
     /// </summary>
     /// <param name="services">The service collection to register the client in.</param>
-    /// <param name="configurationSection">The section holding the <see cref="MediaWikiOptions"/> values.</param>
+    /// <param name="configurationSection">
+    /// The section holding the <see cref="MediaWikiOptions"/> values, not the configuration root: the values are read from
+    /// this object itself.
+    /// </param>
     /// <returns>The builder for the underlying <see cref="HttpClient"/>, so handlers can be added to it.</returns>
     /// <exception cref="InvalidOperationException">A client is already registered for the default wiki.</exception>
     public static IHttpClientBuilder AddMediaWikiClient(this IServiceCollection services, IConfiguration configurationSection)

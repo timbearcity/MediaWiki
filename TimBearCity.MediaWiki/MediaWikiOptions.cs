@@ -3,7 +3,10 @@ namespace TimBearCity.MediaWiki;
 /// <summary>Configuration for <see cref="IMediaWikiClient"/>.</summary>
 public sealed class MediaWikiOptions
 {
-    /// <summary>The default configuration section name.</summary>
+    /// <summary>
+    /// The conventional configuration section name. Nothing reads it for you: pass
+    /// <c>configuration.GetSection(MediaWikiOptions.Position)</c> to <c>AddMediaWikiClient</c>.
+    /// </summary>
     public const string Position = "MediaWiki";
 
     /// <summary>

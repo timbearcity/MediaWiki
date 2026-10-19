@@ -13,7 +13,11 @@ namespace TimBearCity.MediaWiki.Transform;
 /// <param name="TemplateInfo">The template the problem came from, or <see langword="null"/> if it is in the page's own source.</param>
 /// <param name="Params">
 /// Detail particular to <paramref name="Type"/>, whose shape varies by kind. It arrives as raw JSON rather than a
-/// typed member, since the linter defines it per error type; read it with <see cref="JsonElement"/>'s own members.
+/// typed member, since the linter defines it per error type. Check its <see cref="JsonElement.ValueKind"/> before
+/// reading it: a kind with detail sends an object, such as <c>{"name":"div"}</c>; a kind with none sends an empty
+/// array, on which <see cref="JsonElement.TryGetProperty(string, out JsonElement)"/> throws just as
+/// <see cref="JsonElement.GetProperty(string)"/> does; and it is <see cref="JsonValueKind.Undefined"/> if the wiki
+/// leaves the field out.
 /// </param>
 public sealed record MediaWikiLintError(
     [property: JsonPropertyName("type")] string Type,

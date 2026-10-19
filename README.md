@@ -217,6 +217,10 @@ MediaWikiPageHistory? older = await client.GetPageHistoryAsync(
     cancellationToken: cancellationToken);
 ```
 
+A `MediaWikiLintError` carries the detail particular to its `Type` in `Params`, as raw JSON, since each kind defines its own. Check `Params.ValueKind`
+before reading it: a kind with detail sends an object, such as `{"name":"div"}`, and a kind with none sends an empty array, on which `TryGetProperty`
+throws just as `GetProperty` does.
+
 ### Revisions
 
 | Method                     | Endpoint                       | Returns                                                                           |

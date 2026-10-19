@@ -841,6 +841,30 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task AddMediaWikiClient_NamedWikiWithInvalidOptions_NamesTheWikiInEveryMessage()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediaWikiClient("commons", options =>
+        {
+            options.BaseUrl = "https://commons.wikimedia.org/w/rest.php/v1?apikey=abc";
+            options.UserAgent = "";
+            options.Timeout = TimeSpan.Zero;
+            options.MaxResponseSize = 0;
+            options.AccessToken = "token";
+            options.AccessTokenProvider = _ => ValueTask.FromResult<string?>("token");
+        });
+
+        await using var provider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredKeyedService<IMediaWikiClient>("commons"));
+
+        // Two wikis can be wrong in the same way, and the name is what says which one to fix.
+        Assert.Equal(6, exception.Failures.Count());
+        Assert.All(exception.Failures, failure => Assert.Contains(" for wiki \"commons\" ", failure, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task AddMediaWikiClient_NoAccessToken_OmitsAuthorizationHeader()
     {
         var services = new ServiceCollection();

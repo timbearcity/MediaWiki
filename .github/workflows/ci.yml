@@ -153,9 +153,10 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Run read smoke tests
+        # Every smoke test skips when its variable is missing, so a run in which none ran fails instead of passing.
         env:
           MEDIAWIKI_SMOKE_READ_BASE_URL: https://en.wikipedia.org/w/rest.php/v1/
-        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*ReadSmokeTests"
+        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*ReadSmokeTests" --zero-tests-policy strict
 
       - name: Report the failure in an issue
         # Nobody watches the Actions tab for a scheduled run, so a failure there opens an issue, or adds to the open one.
@@ -202,15 +203,19 @@ jobs:
 
       - name: Start a throwaway wiki
         id: wiki
-        run: echo "base_url=$(bash .github/scripts/start-throwaway-wiki.sh ${{ matrix.mediawiki }})" >> "$GITHUB_OUTPUT"
+        # The assignment has a line of its own: inside the argument of echo, the script's exit code would be lost and the step would pass.
+        run: |
+          base_url="$(bash .github/scripts/start-throwaway-wiki.sh ${{ matrix.mediawiki }})"
+          echo "base_url=${base_url}" >> "$GITHUB_OUTPUT"
 
       - name: Run smoke tests
+        # Every smoke test skips when its variable is missing, so a run in which none ran fails instead of passing.
         env:
           MEDIAWIKI_SMOKE_READ_BASE_URL: ${{ steps.wiki.outputs.base_url }}
           MEDIAWIKI_SMOKE_READ_PAGE: Smoke_page
           MEDIAWIKI_SMOKE_READ_FILE: File:Smoke.png
           MEDIAWIKI_SMOKE_WRITE_BASE_URL: ${{ steps.wiki.outputs.base_url }}
-        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*SmokeTests"
+        run: dotnet test --configuration Release --framework net10.0 --verbosity normal -- --filter-class "*SmokeTests" --zero-tests-policy strict
 
       - name: Show wiki logs
         if: failure()

@@ -130,7 +130,7 @@ internal sealed class MediaWikiOptionsValidator : IValidateOptions<MediaWikiOpti
     /// </summary>
     private static bool IsHeaderText(string value)
     {
-        return value.All(character => character is '\t' or (>= ' ' and <= '~'));
+        return value.All(character => character is '\t' or >= ' ' and <= '~');
     }
 
     /// <summary>Whether the header parser accepts the value, as it must when the value is added to the client's headers.</summary>

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Text.Json;
 using TimBearCity.MediaWiki.Pages;
 using Xunit;
 
@@ -17,8 +18,36 @@ public sealed class MediaWikiClientErrorHandlingTests
           }
           """;
 
+    /// <summary>The members of a page body other than <c>latest</c> and <c>source</c>, which a test writes out as its case needs them.</summary>
+    private const string PageMembersJson =
+        """
+        "id": 9228, "key": "Albert_Einstein", "title": "Albert Einstein", "content_model": "wikitext", "license": { "title": null, "url": null }
+        """;
+
     /// <summary>A status code outside the well-known set, so <c>HttpResponseMessage.ReasonPhrase</c> stays null.</summary>
     private const HttpStatusCode UnknownStatusCode = (HttpStatusCode)599;
+
+    [Theory]
+    // A member the record requires is not in the body at all.
+    [InlineData($$"""{ {{PageMembersJson}}, "latest": { "id": 1, "timestamp": null } }""", "'source'")]
+    // The same one level down, in a record the page is made of.
+    [InlineData($$"""{ {{PageMembersJson}}, "latest": { "timestamp": null }, "source": "x" }""", "'id'")]
+    // The member is there, and null where the record does not allow it.
+    [InlineData($$"""{ {{PageMembersJson}}, "latest": { "id": 1, "timestamp": null }, "source": null }""", "'Source'")]
+    public async Task GetPageAsync_BodyBreaksTheRecordsContract_ThrowsMediaWikiException(string json, string member)
+    {
+        // Without the serializer context's two Respect options, each of these binds, and the caller is handed a page with a null or a zero in it.
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(json);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.OK, exception.StatusCode);
+        Assert.IsType<JsonException>(exception.InnerException);
+        Assert.Contains("could not be read as MediaWikiPage", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(member, exception.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public async Task GetPageAsync_CallerCancels_ThrowsOperationCanceledException()

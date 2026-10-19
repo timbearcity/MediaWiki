@@ -15,8 +15,8 @@ set -euo pipefail
 
 # The tag is what a reader compares against MediaWiki's release notes; the digest is what actually runs.
 case "${1:-1.43}" in
-    1.43) image='mediawiki:1.43@sha256:db1c14d264c96835434761f015e8d5b097fcbe5f7e5087875102dcd3f56c2c1d' ;;
-    1.46) image='mediawiki:1.46@sha256:237bbc4cc4d986d9bd0966292dab4611646e188bc20477109e7f87f74f06e259' ;;
+    1.43) image='mediawiki:1.43@sha256:76b3d47b50c4e4a78f82e814917421cb62c49b0c56b4a0f981cd74e2bddd10ac' ;;
+    1.46) image='mediawiki:1.46@sha256:17d7c4fa00f2073c18800a08885020ec36c4fb1bab04f9195d9253c285d2b387' ;;
     *) echo "Unknown MediaWiki version '$1'; the pinned ones are 1.43 and 1.46." >&2; exit 1 ;;
 esac
 # The release tag is what a reader compares against wikidiff2's history; the checksum is what the download is held to.

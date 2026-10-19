@@ -1,0 +1,14 @@
+# Settings every clone shares. Git does not read this file by itself; the Setup section of CONTRIBUTING.md has the command that includes it.
+# Relative paths resolve against the top of the working tree.
+
+[core]
+    # Checks each commit message against the convention in CONTRIBUTING.md before the commit is made.
+    hooksPath = .githooks
+
+[commit]
+    # Pre-fills the editor with a reminder of the message format.
+    template = .gitmessage
+
+[pull]
+    # main only moves by squash merges, so a pull that would need a merge commit stops instead of making one.
+    ff = only

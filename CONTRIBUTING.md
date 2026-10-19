@@ -2,15 +2,18 @@
 
 ## Setup
 
-Two Git settings are per clone, so they are not versioned; run both once after cloning:
+Git does not apply settings from a repository, so the ones every clone shares live in `.gitconfig` at the root. Include it once after cloning; the path is
+relative to `.git/config`:
 
 ```
-git config core.hooksPath .githooks
-git config commit.template .gitmessage
+git config include.path ../.gitconfig
 ```
 
-The first installs a `commit-msg` hook that checks each message against the convention below before the commit is made. The second pre-fills the editor
-with a reminder of the format. Rider runs Git hooks, so the check applies to commits made from the IDE too.
+It sets `core.hooksPath`, which installs a `commit-msg` hook that checks each message against the convention below before the commit is made, and
+`commit.template`, which pre-fills the editor with a reminder of the format. Rider runs Git hooks, so the check applies to commits made from the IDE too. It
+also sets `pull.ff` to `only`: `main` only moves by squash merges, so a `git pull` that would need a merge commit stops instead of making one.
+
+A change to `.gitconfig` applies to every clone that includes it as soon as it is checked out, so review it as you would a change to a hook.
 
 In Rider, under Settings > Version Control > Commit, enable the "Blank line between subject and body", "Limit subject line" (72) and "Limit body line"
 (72) inspections; they flag in the editor what the hook rejects afterwards. Rider reads `commit.template` too, so the reminder appears in the commit field.
@@ -80,7 +83,7 @@ can be compiled from `git log`. Types without a section do not appear in the cha
 | Documentation         | `contributing`, `docs`, `readme`, `site`                                            |
 | Editor settings       | `editorconfig`, `rider`                                                             |
 
-A new area adds its scope to this table and to the check below, which keeps its own copy of the types and scopes.
+A new area adds its scope to this table, to the check below and to `.gitmessage`, which each keep their own copy of the types and scopes.
 
 Examples:
 

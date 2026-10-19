@@ -3,3 +3,9 @@
 
 # Scripts that require a specific ending regardless of platform.
 *.sh    text eol=lf
+
+# Hunk headers name the enclosing member, function or heading, using Git's built-in diff drivers.
+*.cs    diff=csharp
+*.md    diff=markdown
+*.py    diff=python
+*.sh    diff=bash

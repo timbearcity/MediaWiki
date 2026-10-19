@@ -44,6 +44,10 @@ compares each release against the previous one, so a change to the contract cann
   after `-00:00:00.0010000` with the infinite `Timeout` the README suggests for a resilience handler, and a handler's own deadline,
   `HttpClient.CancelPendingRequests()` or an `HttpClient` disposed in flight were reported as timeouts. Those now read as canceled, though not by the
   caller. The exception is otherwise unchanged, and canceling your own `CancellationToken` still throws `OperationCanceledException`.
+- A `MediaWikiException` for a `200` whose body cannot be read now names the list the method expected as it is written in code, for example
+  `IReadOnlyList<MediaWikiLintError>` ([#60](https://github.com/timbearcity/MediaWiki/issues/60)). `GetPageLintAsync`, `GetRevisionLintAsync`,
+  `TransformWikitextToLintAsync` and `GetPageLanguageLinksAsync` gave the type's own name, ``IReadOnlyList`1``, so for a body of `null` the message did
+  not say a list of what. The other methods read as before.
 
 ## [0.3.0] - 2026-09-26
 

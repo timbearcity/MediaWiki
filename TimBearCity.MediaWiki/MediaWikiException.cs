@@ -41,10 +41,11 @@ public sealed class MediaWikiException(
     public string? ErrorKey { get; } = errorKey;
 
     /// <summary>
-    /// Whether retrying the same request later may succeed: a timeout, a transport failure, a rate limit, or a
-    /// server-side error. A response that exceeded <see cref="MediaWikiOptions.MaxResponseSize"/> is not one: the
-    /// wiki answered, and would answer the same way again. Nor is a <c>500</c> whose <see cref="ErrorKey"/> blames
-    /// the request, such as <c>rest-pagehistorycount-too-many-revisions</c> or <c>rest-search-error</c>.
+    /// Whether retrying the same request later may succeed: a timeout (the client's own, or a <c>408</c> from the
+    /// wiki), a transport failure, a rate limit, or a server-side error. A response that exceeded
+    /// <see cref="MediaWikiOptions.MaxResponseSize"/> is not one: the wiki answered, and would answer the same way
+    /// again. Nor is a <c>500</c> whose <see cref="ErrorKey"/> blames the request, such as
+    /// <c>rest-pagehistorycount-too-many-revisions</c> or <c>rest-search-error</c>.
     /// </summary>
     public bool IsTransient => StatusCode switch
     {

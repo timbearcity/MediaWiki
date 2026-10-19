@@ -328,6 +328,23 @@ public sealed class MediaWikiClientErrorHandlingTests
         Assert.Equal(TimeSpan.Zero, exception.RetryAfter);
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.RequestTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task GetPageAsync_StatusWorthRetrying_ReportsTransient(HttpStatusCode statusCode)
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningStatus(statusCode);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(statusCode, exception.StatusCode);
+        Assert.True(exception.IsTransient);
+    }
+
     [Fact]
     public async Task GetPageAsync_SuccessInUnsupportedCharset_ThrowsMediaWikiException()
     {
@@ -446,6 +463,29 @@ public sealed class MediaWikiClientErrorHandlingTests
         var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHtmlAsync("Bad|Title", TestContext.Current.CancellationToken));
 
         Assert.Equal(MediaWikiErrorKeys.NonexistentTitle, exception.ErrorKey);
+    }
+
+    [Fact]
+    public async Task GetPageHtmlAsync_ServerErrorWhoseKeyDoesNotBlameTheRequest_ReportsTransient()
+    {
+        // What the wiki answers when Parsoid fails: a 500 with an error key, but the wiki's trouble rather than the request's.
+        const string errorJson = $$"""
+                                   {
+                                     "errorKey": "{{MediaWikiErrorKeys.HtmlBackendError}}",
+                                     "messageTranslations": { "en": "Unable to fetch Parsoid HTML: backend unavailable" },
+                                     "httpCode": 500,
+                                     "httpReason": "Internal Server Error"
+                                   }
+                                   """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.InternalServerError);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageHtmlAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, exception.StatusCode);
+        Assert.Equal(MediaWikiErrorKeys.HtmlBackendError, exception.ErrorKey);
+        Assert.True(exception.IsTransient);
     }
 
     [Fact]

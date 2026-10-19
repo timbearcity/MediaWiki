@@ -17,6 +17,7 @@ internal static class MediaWikiErrorKeys
     public const string EditConflictHyphenated = "edit-conflict";
 
     public const string FileNotThumbnailable = "rest-file-not-thumbnailable";
+    public const string HtmlBackendError = "rest-html-backend-error";
     public const string InvalidTitle = "rest-invalid-title";
     public const string InvalidTitleOnEdit = "apierror-invalidtitle";
     public const string MissingTitle = "apierror-missingtitle";

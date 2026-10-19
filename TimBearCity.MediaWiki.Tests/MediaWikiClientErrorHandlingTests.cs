@@ -100,6 +100,7 @@ public sealed class MediaWikiClientErrorHandlingTests
     [InlineData("""{ "messageTranslations": { }, "message": "No translations" }""", "No translations")]
     [InlineData("""{ "messageTranslations": { "de": "Fehler" }, "message": "Ignored" }""", "Fehler")]
     [InlineData("""{ "messageTranslations": { "en": "   ", "de": "Fehler" } }""", "Fehler")]
+    [InlineData("""{ "messageTranslations": { "de": "Fehler", "en": "Error" } }""", "Error")]
     [InlineData("""{ "messageTranslations": { "de": "   " }, "message": "Fallback" }""", "Fallback")]
     [InlineData("""{ "messageTranslations": { "de": "   " } }""", null)]
     public async Task GetPageAsync_ErrorBodyShape_SurfacesBestAvailableDetail(string errorJson, string? expectedDetail)

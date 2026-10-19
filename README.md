@@ -347,7 +347,8 @@ wikitext. A `revisionId` without a `title` is refused, since a revision means no
 ## Errors
 
 Every failure other than an absent page, revision or file throws `MediaWikiException`: a rejected request, a timeout, a connection failure, an unreadable body.
-It derives from `HttpRequestException`, so existing HTTP error handling still catches it, and carries the detail MediaWiki returns:
+It derives from `HttpRequestException`, so existing HTTP error handling still catches it. Its `Message` includes the wiki's own description of the error, in
+English whenever the body has an English translation, which a wiki in another language sends after its own. It also carries the detail MediaWiki returns:
 
 | Member        | Notes                                                                                                                                                                                                                                                 |
 |---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

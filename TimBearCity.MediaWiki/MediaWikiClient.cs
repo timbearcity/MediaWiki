@@ -67,8 +67,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
     /// The error keys under which a page endpoint answers <c>404</c> because the page, or its content, is not there.
     /// A title no page could have, such as one with angle brackets, counts too: the page endpoints answer it with
     /// <c>rest-invalid-title</c> where the rest answer <c>rest-nonexistent-title</c>. Any other <c>404</c> is
-    /// something else: an endpoint the wiki's version does not serve (<c>rest-no-match</c>), a base URL that misses
-    /// the REST API, or a web server answering for it.
+    /// something else: an endpoint the wiki's version does not serve or a base URL without its <c>/v1/</c> segment
+    /// (both <c>rest-no-match</c>), a base URL that misses the REST API, or a web server answering for it.
     /// </summary>
     private static readonly FrozenSet<string> AbsentPageErrorKeys = FrozenSet.ToFrozenSet(
     [
@@ -696,7 +696,8 @@ public sealed class MediaWikiClient : IMediaWikiClient
             : error?.Key switch
             {
                 null => "The body was not a MediaWiki error, so the request may not have reached the REST API; check the base URL.",
-                "rest-no-match" => "The wiki has no such endpoint, which usually means its MediaWiki version predates it.",
+                "rest-no-match" => "The wiki has no such endpoint: either its MediaWiki version predates it, or the base URL lacks the REST " +
+                                   "API's version segment, e.g. \"/w/rest.php/v1/\".",
                 "rest-prefix-mismatch" or "rest-unknown-module" => "The REST API did not recognize the path; check the base URL.",
                 _ => null
             };

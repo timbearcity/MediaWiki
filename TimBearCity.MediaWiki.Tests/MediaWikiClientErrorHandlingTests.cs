@@ -79,6 +79,20 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Fact]
+    public async Task GetPageAsync_EndpointUnknownToWiki_NamesBothCauses()
+    {
+        using var handler = HttpMessageHandlerStub.CreateReturningNotFound(MediaWikiErrorKeys.NoMatch);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        // A wiki answers the same way for a base URL without its "/v1/" as for an endpoint it is too old to serve.
+        Assert.Contains("MediaWiki version predates it", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("base URL", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetPageAsync_ErrorBody_SurfacesErrorDetail()
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(ErrorJson, HttpStatusCode.BadRequest);
@@ -205,10 +219,13 @@ public sealed class MediaWikiClientErrorHandlingTests
     }
 
     [Theory]
-    // The 404 MediaWiki sends for a route it does not serve, as an older version does for the newer endpoints.
+    // The 404 MediaWiki sends for a route it does not serve, as an older version does for the newer endpoints, and any
+    // version does for a base URL without the "/v1/" segment.
     [InlineData(MediaWikiErrorKeys.NoMatch, "no such endpoint")]
-    // The REST API reached, but at a path it does not own, as a base URL without the "/v1/" segment produces.
+    // A path outside the REST API's root, as a web server that hands rest.php some other path produces.
     [InlineData(MediaWikiErrorKeys.PrefixMismatch, "did not recognize the path")]
+    // A path no REST module serves, which MediaWiki sends only when not even its prefix-less module is there.
+    [InlineData(MediaWikiErrorKeys.UnknownModule, "did not recognize the path")]
     // Any other key is not a routing problem, so the message names the key and offers no hint.
     [InlineData("rest-something-else", "(rest-something-else).")]
     // A key under which another kind of endpoint reports absence is not absence here: a page endpoint never sends it.

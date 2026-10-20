@@ -1,13 +1,30 @@
 # <type>(<scope>)!: <subject>
 #
-# type:    feat | fix | docs | test | refactor | style | build | ci | chore
-# scope:   optional, e.g. client, options, di, tests, smoke
-# !:       only for a breaking change, with a BREAKING CHANGE: footer below
-# subject: imperative, lowercase, no trailing period, header at most 72 characters
+# type:    feat, fix, docs, test, refactor, style, build, ci, chore
+# scope:   optional, and then one of these:
+#            Library     auth, client, diagnostics, errors, files,
+#                        options, pages, revisions
+#            Tests       smoke, tests
+#            Build       deps, package, release, sln
+#            Repository  commit-check, dependabot, github, scripts
+#            Docs        contributing, docs, readme, site
+#            Editor      editorconfig, rider
+# !:       only for a breaking change, and then always, with a
+#          BREAKING CHANGE: footer below
+# subject: imperative (add, not Added or Adds), starting with a
+#          lowercase letter, no trailing period; the whole header is at
+#          most 72 characters
 #
-# Body (optional): what changed and why, wrapped at 72 characters.
+# Body (optional), after a blank line: what changed and why, not how.
+# Wrap it at 72 characters; only a line holding a URL or a trailer such
+# as Co-authored-by: may run longer.
 #
-# Footers (optional): BREAKING CHANGE: <what breaks and how to migrate>
-#                     Fixes #<issue>
+# Footers (optional):
+#   BREAKING CHANGE: <what breaks and how to migrate>
+#       spelled with a space, not a hyphen, and only with the ! above
+#   Fixes #<issue>
+#       one per issue, each on a line of its own after a blank line or
+#       another Fixes line; no other wording may close an issue, such as
+#       Closes #N, Fixes: #N or a fixes #N inside a sentence
 #
 # The full convention is in CONTRIBUTING.md.

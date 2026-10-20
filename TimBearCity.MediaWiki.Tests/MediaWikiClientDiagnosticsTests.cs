@@ -28,7 +28,8 @@ public sealed class MediaWikiClientDiagnosticsTests
     /// <summary>
     /// Every operation on <see cref="IMediaWikiClient"/>, keyed by method name, so a method that stops naming its
     /// activity after itself is caught. Keyed rather than listed as delegates so that each row is serializable, and
-    /// therefore enumerable on its own in a test explorer.
+    /// therefore enumerable on its own in a test explorer. <see cref="OperationsByName_ListsEveryInterfaceMethod"/>
+    /// fails when a method is missing.
     /// </summary>
     private static readonly Dictionary<string, Func<IMediaWikiClient, CancellationToken, Task>> OperationsByName = new(StringComparer.Ordinal)
     {
@@ -241,6 +242,14 @@ public sealed class MediaWikiClientDiagnosticsTests
         Assert.Equal(methodName[..^"Async".Length], activity.OperationName);
         Assert.Equal(ActivityKind.Client, activity.Kind);
         Assert.Equal(MediaWikiClient.ActivitySourceName, activity.Source.Name);
+    }
+
+    [Fact]
+    public void OperationsByName_ListsEveryInterfaceMethod()
+    {
+        Assert.Equal(
+            typeof(IMediaWikiClient).GetMethods().Select(method => method.Name).Order(StringComparer.Ordinal),
+            OperationsByName.Keys.Order(StringComparer.Ordinal));
     }
 
     /// <summary>

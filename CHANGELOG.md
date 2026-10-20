@@ -51,6 +51,10 @@ compares each release against the previous one, so a change to the contract cann
 - A `MediaWikiException` for a `404` with the key `rest-no-match` now names a `BaseUrl` without its `/v1/` segment as a cause, besides a MediaWiki version
   that predates the endpoint ([#70](https://github.com/timbearcity/MediaWiki/issues/70)). MediaWiki answers both alike, so a client configured with
   `https://en.wikipedia.org/w/rest.php/` failed every call with a hint that blamed the wiki's version, though the wiki runs the newest MediaWiki there is.
+- A `MediaWikiException` now ends the message from MediaWiki's error body with a period when the wiki sent it without one, so the hint for a `404` no
+  longer runs into it ([#109](https://github.com/timbearcity/MediaWiki/issues/109)). Most of MediaWiki's messages stop without a period, those for the
+  three keys that get a hint among them, so a `BaseUrl` without its `/v1/` segment read `... did not match any known handler The wiki has no such endpoint`,
+  and a message without a hint ended unpunctuated. A message that ends in `.`, `!` or `?` is left as it is.
 
 ## [0.3.0] - 2026-09-26
 

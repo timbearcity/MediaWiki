@@ -92,6 +92,33 @@ public sealed class MediaWikiClientErrorHandlingTests
         Assert.Contains("base URL", exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    // MediaWiki's own wording, which stops without a period as most of its messages do.
+    [InlineData("", ".")]
+    // A message that already ends a sentence keeps its own punctuation.
+    [InlineData(".", ".")]
+    [InlineData("!", "!")]
+    [InlineData("?", "?")]
+    public async Task GetPageAsync_EndpointUnknownToWiki_SeparatesDetailFromHint(string ending, string expectedEnding)
+    {
+        var errorJson =
+            $$"""
+              {
+                "errorKey": "{{MediaWikiErrorKeys.NoMatch}}",
+                "messageTranslations": { "en": "The requested relative path (/page/Albert_Einstein) did not match any known handler{{ending}}" },
+                "httpCode": 404,
+                "httpReason": "Not Found"
+              }
+              """;
+        using var handler = HttpMessageHandlerStub.CreateReturningJson(errorJson, HttpStatusCode.NotFound);
+        using var httpClient = handler.CreateClient();
+        var client = new MediaWikiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
+
+        Assert.Contains($"did not match any known handler{expectedEnding} The wiki has no such endpoint", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task GetPageAsync_ErrorBody_SurfacesErrorDetail()
     {
@@ -125,7 +152,8 @@ public sealed class MediaWikiClientErrorHandlingTests
 
         var exception = await Assert.ThrowsAsync<MediaWikiException>(() => client.GetPageAsync("Albert_Einstein", TestContext.Current.CancellationToken));
 
-        Assert.EndsWith(expectedDetail is null ? "failed with status 400 Bad Request." : $"failed with status 400 Bad Request. {expectedDetail}",
+        // None of these messages ends a sentence, so the client ends it with a period.
+        Assert.EndsWith(expectedDetail is null ? "failed with status 400 Bad Request." : $"failed with status 400 Bad Request. {expectedDetail}.",
             exception.Message, StringComparison.Ordinal);
     }
 

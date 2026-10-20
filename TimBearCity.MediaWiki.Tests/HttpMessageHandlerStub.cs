@@ -198,7 +198,10 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     }
 
     /// <summary>Answers every request with <c>404</c> and the error body MediaWiki sends under <paramref name="errorKey"/>.</summary>
-    /// <param name="errorKey">The key, e.g. <c>rest-nonexistent-title</c>; MediaWiki's own wording is not part of what the client reads.</param>
+    /// <param name="errorKey">
+    /// The key, e.g. <c>rest-nonexistent-title</c>. The message only names it, since the client does not parse MediaWiki's wording, and
+    /// ends without a period, as most of MediaWiki's messages do.
+    /// </param>
     public static HttpMessageHandlerStub CreateReturningNotFound(string errorKey)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(errorKey);
@@ -206,7 +209,7 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
         var json = $$"""
                      {
                        "errorKey": "{{errorKey}}",
-                       "messageTranslations": { "en": "The requested resource was not found ({{errorKey}})." },
+                       "messageTranslations": { "en": "The requested resource was not found ({{errorKey}})" },
                        "httpCode": 404,
                        "httpReason": "Not Found"
                      }

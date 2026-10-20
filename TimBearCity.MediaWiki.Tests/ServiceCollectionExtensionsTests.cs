@@ -1230,6 +1230,38 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
         Assert.Equal(42, count?.Count);
     }
 
+    [Theory]
+    // One segment more than the request, as a proxy that strips a prefix on the way in leaves the wiki's own path.
+    [InlineData(
+        "/wiki/w/rest.php/v1/page/Talk%3AEarth/history/counts/{type}",
+        "https://en.wikipedia.org/wiki/w/rest.php/v1/page/Talk%3AEarth/history/counts/%7Btype%7D")]
+    // One segment fewer.
+    [InlineData(
+        "/rest.php/v1/page/Talk%3AEarth/history/counts/{type}",
+        "https://en.wikipedia.org/rest.php/v1/page/Talk%3AEarth/history/counts/%7Btype%7D")]
+    public async Task AddMediaWikiClient_RedirectWithPlaceholderAtAnotherDepth_FollowsItAsItIs(string location, string expectedHop)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => HttpMessageHandlerStub.CreateRedirecting(HttpStatusCode.Moved, location, """{ "count": 42, "limit": false }"""));
+
+        services.AddMediaWikiClient(options =>
+        {
+            options.BaseUrl = BaseUrl;
+            options.UserAgent = UserAgent;
+        }).ConfigurePrimaryHttpMessageHandler<HttpMessageHandlerStub>();
+
+        await using var provider = services.BuildServiceProvider();
+        var handler = provider.GetRequiredService<HttpMessageHandlerStub>();
+
+        await provider.GetRequiredService<IMediaWikiClient>().GetPageHistoryCountAsync(
+            "talk:Earth",
+            MediaWikiPageHistoryCountType.Edits,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        // The segments only line up when both paths come from the same route template, so a target of another depth is left alone.
+        Assert.Equal([$"{BaseUrl}page/talk%3AEarth/history/counts/edits", expectedHop], handler.Hops.Select(hop => hop.Uri));
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_RetryAfterCrossOriginRedirect_StartsAgainFromTheWiki()
     {

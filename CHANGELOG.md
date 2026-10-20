@@ -48,6 +48,9 @@ compares each release against the previous one, so a change to the contract cann
   `IReadOnlyList<MediaWikiLintError>` ([#60](https://github.com/timbearcity/MediaWiki/issues/60)). `GetPageLintAsync`, `GetRevisionLintAsync`,
   `TransformWikitextToLintAsync` and `GetPageLanguageLinksAsync` gave the type's own name, ``IReadOnlyList`1``, so for a body of `null` the message did
   not say a list of what. The other methods read as before.
+- A `MediaWikiException` for a `404` with the key `rest-no-match` now names a `BaseUrl` without its `/v1/` segment as a cause, besides a MediaWiki version
+  that predates the endpoint ([#70](https://github.com/timbearcity/MediaWiki/issues/70)). MediaWiki answers both alike, so a client configured with
+  `https://en.wikipedia.org/w/rest.php/` failed every call with a hint that blamed the wiki's version, though the wiki runs the newest MediaWiki there is.
 
 ## [0.3.0] - 2026-09-26
 

@@ -17,8 +17,8 @@ namespace TimBearCity.MediaWiki;
 /// </para>
 /// <para>
 /// Absence is read from the error key in the <c>404</c> body rather than from the status alone: a <c>404</c> for an
-/// endpoint the wiki's version does not serve (<c>rest-no-match</c>), or one with no MediaWiki error body at all,
-/// throws.
+/// endpoint the wiki's version does not serve or a base URL without its <c>/v1/</c> segment (both
+/// <c>rest-no-match</c>), or one with no MediaWiki error body at all, throws.
 /// </para>
 /// </remarks>
 public interface IMediaWikiClient

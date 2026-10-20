@@ -147,8 +147,9 @@ file answers `null` when the wiki does not have it, and throws for everything el
 is a failure rather than an absent result.
 
 "Does not have it" is decided by the error key in the `404` body, not by the status alone. MediaWiki also answers `404` for an endpoint it does not serve
-(`rest-no-match`), and a web server answers `404` with HTML for a `BaseUrl` that misses the REST API; both throw, with the key and a hint in the message, so a
-misconfigured client or an older wiki cannot pass for a wiki with no pages.
+(`rest-no-match`), whether the wiki's version predates the endpoint or the `BaseUrl` lacks its `/v1/` segment, and a web server answers `404` with HTML for
+a `BaseUrl` that misses the REST API; all of these throw, with the key and a hint in the message, so a misconfigured client or an older wiki cannot pass for
+a wiki with no pages.
 
 ## Third-party wikis
 

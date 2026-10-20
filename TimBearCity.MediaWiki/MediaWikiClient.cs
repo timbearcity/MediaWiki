@@ -603,7 +603,7 @@ public sealed class MediaWikiClient : IMediaWikiClient
 
         var message = string.Create(
             CultureInfo.InvariantCulture,
-            $"The request to '{requestUri}' failed with status {(int)response.StatusCode}{(reason is null ? null : $" {reason}")}.{(detail is null ? null : $" {detail}")}{(hint is null ? null : $" {hint}")}");
+            $"The request to '{requestUri}' failed with status {(int)response.StatusCode}{(reason is null ? null : $" {reason}")}.{(detail is null ? null : $" {EndSentence(detail)}")}{(hint is null ? null : $" {hint}")}");
 
         return Trace(new MediaWikiException(message, response.StatusCode, error?.Key, GetRetryAfter(response)));
     }
@@ -640,6 +640,15 @@ public sealed class MediaWikiClient : IMediaWikiClient
         MediaWikiPipeline.ConfigureHttpClient(httpClient, options);
 
         return httpClient;
+    }
+
+    /// <summary>
+    /// Ends MediaWiki's message with a period unless it already ends a sentence: most of its messages stop without one, which
+    /// would leave the exception's message unfinished, or run it into the hint after it.
+    /// </summary>
+    private static string EndSentence(string message)
+    {
+        return message[^1] is '.' or '!' or '?' ? message : $"{message}.";
     }
 
     /// <summary>Throws a <see cref="MediaWikiException"/> describing the response unless it succeeded.</summary>

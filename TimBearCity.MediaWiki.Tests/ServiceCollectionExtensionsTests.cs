@@ -679,25 +679,26 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
     }
 
     [Theory]
-    [InlineData("", UserAgent, 30, null)]
-    [InlineData("not-a-url", UserAgent, 30, null)]
-    [InlineData("localhost:8080/w/rest.php/v1/", UserAgent, 30, null)]
-    [InlineData("ftp://en.wikipedia.org/w/rest.php/v1/", UserAgent, 30, null)]
-    [InlineData("https://en.wikipedia.org/w/rest.php/v1/?x=1", UserAgent, 30, null)]
-    [InlineData("https://en.wikipedia.org/w/rest.php/v1/#x", UserAgent, 30, null)]
-    [InlineData(BaseUrl, "", 30, null)]
-    [InlineData(BaseUrl, "   ", 30, null)]
-    [InlineData(BaseUrl, UserAgent, 0, null)]
-    [InlineData(BaseUrl, UserAgent, -1, null)]
-    [InlineData(BaseUrl, UserAgent, -0.002, null)]
-    [InlineData(BaseUrl, UserAgent, int.MaxValue / 1000 + 1, null)]
-    [InlineData(BaseUrl, UserAgent, 30, 0)]
-    [InlineData(BaseUrl, UserAgent, 30, -1)]
+    [InlineData("", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must be an absolute http or https URL")]
+    [InlineData("not-a-url", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must be an absolute http or https URL")]
+    [InlineData("localhost:8080/w/rest.php/v1/", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must be an absolute http or https URL")]
+    [InlineData("ftp://en.wikipedia.org/w/rest.php/v1/", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must be an absolute http or https URL")]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/?x=1", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must not have a query string or fragment")]
+    [InlineData("https://en.wikipedia.org/w/rest.php/v1/#x", UserAgent, 30, null, "MediaWikiOptions.BaseUrl must not have a query string or fragment")]
+    [InlineData(BaseUrl, "", 30, null, "MediaWikiOptions.UserAgent must be provided")]
+    [InlineData(BaseUrl, "   ", 30, null, "MediaWikiOptions.UserAgent must be provided")]
+    [InlineData(BaseUrl, UserAgent, 0, null, "MediaWikiOptions.Timeout must be greater than zero and at most 24.20:31:23.6470000")]
+    [InlineData(BaseUrl, UserAgent, -1, null, "MediaWikiOptions.Timeout must be greater than zero and at most 24.20:31:23.6470000")]
+    [InlineData(BaseUrl, UserAgent, -0.002, null, "MediaWikiOptions.Timeout must be greater than zero and at most 24.20:31:23.6470000")]
+    [InlineData(BaseUrl, UserAgent, int.MaxValue / 1000 + 1, null, "MediaWikiOptions.Timeout must be greater than zero and at most 24.20:31:23.6470000")]
+    [InlineData(BaseUrl, UserAgent, 30, 0, "MediaWikiOptions.MaxResponseSize must be greater than zero.")]
+    [InlineData(BaseUrl, UserAgent, 30, -1, "MediaWikiOptions.MaxResponseSize must be greater than zero.")]
     public async Task AddMediaWikiClient_InvalidOptions_ThrowsOptionsValidationException(
         string baseUrl,
         string userAgent,
         double timeoutSeconds,
-        int? maxResponseSize)
+        int? maxResponseSize,
+        string expectedFailure)
     {
         var services = new ServiceCollection();
 
@@ -711,7 +712,10 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
 
         await using var provider = services.BuildServiceProvider();
 
-        Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+        var exception = Assert.Throws<OptionsValidationException>(provider.GetRequiredService<IMediaWikiClient>);
+
+        // The type alone does not say which rule refused the value, or that it was the only one to.
+        Assert.StartsWith(expectedFailure, Assert.Single(exception.Failures), StringComparison.Ordinal);
     }
 
     [Fact]

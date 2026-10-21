@@ -330,6 +330,23 @@ public sealed class ServiceCollectionExtensionsTests : IDisposable
             StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AddMediaWikiClient_BlankName_ThrowsArgumentException(string name)
+    {
+        var services = new ServiceCollection();
+        var section = new ConfigurationBuilder().Build().GetSection(MediaWikiOptions.Position);
+
+        // An empty name is the default wiki's own, so without the guard the call would register that one instead.
+        var inCode = Assert.Throws<ArgumentException>(() => services.AddMediaWikiClient(name, options => options.BaseUrl = CommonsBaseUrl));
+        var fromSection = Assert.Throws<ArgumentException>(() => services.AddMediaWikiClient(name, section));
+
+        Assert.Equal("name", inCode.ParamName);
+        Assert.Equal("name", fromSection.ParamName);
+        Assert.Empty(services);
+    }
+
     [Fact]
     public async Task AddMediaWikiClient_ConfigurationSection_BindsOptions()
     {

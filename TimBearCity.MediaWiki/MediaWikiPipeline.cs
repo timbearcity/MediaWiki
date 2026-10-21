@@ -81,14 +81,9 @@ internal static class MediaWikiPipeline
     private static string BuildLibraryUserAgent()
     {
         var assembly = typeof(MediaWikiClient).Assembly;
-        var version = GetVersion(assembly);
 
-        // Informational versions may carry source-control metadata ("1.0.0+abc1234"), which is not a valid header token.
-        var plusIndex = version.IndexOf('+', StringComparison.Ordinal);
-        if (plusIndex >= 0)
-        {
-            version = version[..plusIndex];
-        }
+        // Informational versions may carry source-control metadata ("1.0.0+abc1234"), which is cut so that no request carries the commit.
+        var version = GetVersion(assembly).Split('+', 2)[0];
 
         return $"{assembly.GetName().Name}/{version}";
     }

@@ -168,6 +168,7 @@ public sealed class MediaWikiClientTests
         Assert.Equal($"{HttpMessageHandlerStub.DefaultBaseAddress}search/page?q=physicist&limit=10", request.RequestUri?.AbsoluteUri);
         Assert.StartsWith(UserAgent, userAgent, StringComparison.Ordinal);
         Assert.Contains("MediaWiki/", userAgent, StringComparison.Ordinal);
+        Assert.DoesNotContain("+", userAgent, StringComparison.Ordinal);
         Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
         Assert.Equal("secret-token", request.Headers.Authorization?.Parameter);
         Assert.Contains(request.Headers.Accept, header => header.MediaType == MediaTypeNames.Application.Json);

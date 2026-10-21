@@ -86,6 +86,13 @@ public sealed class MediaWikiClientPageTests
     [InlineData("太陽系", "%E5%A4%AA%E9%99%BD%E7%B3%BB")]
     // Only a whole segment of "." or ".." is a dot segment; a key that merely starts with dots is sent as it is.
     [InlineData(".. .", ".._.")]
+    // A slash stays inside the segment: sent bare it splits the path, and the wiki finds no route for it.
+    [InlineData("Wikipedia:Manual of Style/Dates and numbers", "Wikipedia%3AManual_of_Style%2FDates_and_numbers")]
+    // A question mark or a hash sent bare ends the path, and the wiki answers for the page named by what came before it.
+    [InlineData("What Is to Be Done?", "What_Is_to_Be_Done%3F")]
+    [InlineData("C#", "C%23")]
+    // A percent sign is the key's own and not the start of an escape, or "50%2F50" would arrive as "50/50".
+    [InlineData("50%2F50", "50%252F50")]
     public async Task GetPageAsync_KeyNeedingEscaping_RequestsEscapedPageEndpoint(string key, string expectedSegment)
     {
         using var handler = HttpMessageHandlerStub.CreateReturningJson(EinsteinPage.Json);

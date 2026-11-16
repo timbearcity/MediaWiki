@@ -12,16 +12,15 @@ updates:
       microsoft-extensions:
         patterns:
           - "Microsoft.Extensions.*"
-    # The net8.0 ItemGroup in the library csproj deliberately floors these at 8.x, and Dependabot cannot tell
-    # the two conditional groups apart, so only patch updates are allowed for them. 8.0.x patches still arrive
-    # as PRs; the net10.0 group, whose major bumps are swallowed by the same rule, is bumped by hand.
+    # The library csproj deliberately keeps these on the major version of its target, so that a .NET 10 app is
+    # not pushed onto 11.x by this package. A new major version comes with a new target and is bumped by hand.
     ignore:
       - dependency-name: "Microsoft.Extensions.DependencyInjection"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+        update-types: [ "version-update:semver-major" ]
       - dependency-name: "Microsoft.Extensions.Http"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+        update-types: [ "version-update:semver-major" ]
       - dependency-name: "Microsoft.Extensions.Options.ConfigurationExtensions"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+        update-types: [ "version-update:semver-major" ]
 
   - package-ecosystem: github-actions
     directory: /

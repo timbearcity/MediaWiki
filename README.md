@@ -14,8 +14,8 @@ the core API. This file is the guide; the [API reference](https://timbearcity.gi
 dotnet add package TimBearCity.MediaWiki
 ```
 
-Targets `net8.0` and `net10.0`, and is trimming and Native AOT compatible: responses are deserialized through a System.Text.Json source generator, and
-configuration is bound by hand rather than through reflection.
+Targets `net10.0`, which .NET 11 apps use too, and is trimming and Native AOT compatible: responses are deserialized through a System.Text.Json source
+generator, and configuration is bound by hand rather than through reflection.
 
 ## Register
 
@@ -445,7 +445,8 @@ dotnet test --framework net10.0 -- --coverage --coverage-settings TimBearCity.Me
 `TimBearCity.MediaWiki.Tests/CodeCoverage.config` narrows the run to `TimBearCity.MediaWiki.dll` and drops the sources under `obj/`, so what the JSON source
 generator emits does not count toward the result. The report lands in `TestResults/`.
 
-The suite itself runs on every target framework the library ships for; coverage is a property of the source, so it is measured once, on the newest one.
+The suite itself runs on `net10.0` and on `net11.0`, where it exercises the library's `net10.0` build as a .NET 11 app would; coverage is a property of the
+source, so it is measured once, on `net10.0`.
 
 CI runs the same command on every push and pull request, then gates the build on the result:
 

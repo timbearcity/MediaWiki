@@ -79,11 +79,11 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          # The tests run on every target the library ships for, so the older runtime is installed rather than
-          # taken from the runner image, which may drop it.
+          # The tests run on the library's target and on the newest runtime, so both are installed rather than taken
+          # from the runner image, which may lack or drop one. The newest SDK is the one that builds.
           dotnet-version: |
-            8.0.x
             10.0.x
+            11.0.x
 
       - name: Restore and audit dependencies
         run: dotnet restore -warnaserror:NU1901,NU1902,NU1903,NU1904
@@ -103,8 +103,8 @@ jobs:
             exit 0
           fi
           echo "ran=true" >> "$GITHUB_OUTPUT"
-          # Coverage is a property of the source, so it is measured once, on the newest target.
-          dotnet test --configuration Release --no-build --verbosity normal --framework net8.0
+          # Coverage is a property of the source, so it is measured once, on the library's target.
+          dotnet test --configuration Release --no-build --verbosity normal --framework net11.0
           dotnet test --configuration Release --no-build --verbosity normal --framework net10.0 -- \
             --coverage --coverage-settings TimBearCity.MediaWiki.Tests/CodeCoverage.config \
             --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
@@ -150,7 +150,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+          # The test project's net11.0 target needs the newest SDK to restore; the tests run on the library's target.
+          dotnet-version: |
+            10.0.x
+            11.0.x
 
       - name: Run read smoke tests
         # Every smoke test skips when its variable is missing, so a run in which none ran fails instead of passing.
@@ -199,7 +202,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+          # The test project's net11.0 target needs the newest SDK to restore; the tests run on the library's target.
+          dotnet-version: |
+            10.0.x
+            11.0.x
 
       - name: Start a throwaway wiki
         id: wiki

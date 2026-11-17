@@ -40,8 +40,8 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          # The API metadata is read from the newest target only; docfx.json pins it.
-          dotnet-version: 10.0.x
+          # The API metadata is read from the newest target only; docfx.json pins it. The SDK is the one global.json pins.
+          dotnet-version: 11.0.x
 
       - name: Restore tools
         run: dotnet tool restore

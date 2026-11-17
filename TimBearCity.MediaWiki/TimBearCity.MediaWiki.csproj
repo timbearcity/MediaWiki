@@ -26,9 +26,9 @@
       forced onto a newer stack just to use this package. NuGet versions are floors; a net10.0 app on 10.x stays on 10.x.
     -->
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.15" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.15" />
     </ItemGroup>
 
     <!-- Build-time only; consumers do not take a dependency on it. -->

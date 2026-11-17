@@ -50,7 +50,8 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+          # Packing restores the whole solution, and the test project's net11.0 target needs the newest SDK for that.
+          dotnet-version: 11.0.x
 
       - name: Resolve version
         id: version

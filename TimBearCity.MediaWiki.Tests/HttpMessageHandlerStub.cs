@@ -25,11 +25,7 @@ internal sealed class HttpMessageHandlerStub : HttpMessageHandler
     private readonly List<Hop> _hops = [];
     private readonly List<string?> _requestBodies = [];
     private readonly List<HttpRequestMessage> _requests = [];
-#if NET9_0_OR_GREATER
     private readonly Lock _requestsLock = new();
-#else
-    private readonly object _requestsLock = new();
-#endif
     private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _respond;
 
     private HttpMessageHandlerStub(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond)

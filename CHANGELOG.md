@@ -11,6 +11,12 @@ compares each release against the previous one, so a change to the contract cann
 
 ## [Unreleased]
 
+### Removed
+
+- The `net8.0` target. .NET 8 and .NET 9, whose apps used it, went out of support on 2026-11-10, and the Microsoft.Extensions.* 8.x packages it
+  referenced no longer get security fixes ([#121](https://github.com/timbearcity/MediaWiki/issues/121)). The package now targets `net10.0` alone, which
+  .NET 11 apps use as well. An app on .NET 8 or .NET 9 can stay on 0.3.1; move it to .NET 10 or later to take this version.
+
 ## [0.3.1] - 2026-10-21
 
 ### Fixed
